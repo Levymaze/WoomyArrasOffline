@@ -4,7 +4,7 @@
 
 Woomy-Arras Offline is a community continuation of the original offline Woomy project after it lost funding and had to be taken down.
 
-This codebase is based on core server files from August 2020 combined with older Arras source files. The original game (Arras / Arras.io) was created by Clarise. Later, Drako Hyena recovered and rebuilt offline versions of the game files around 2018, which became the foundation for many offline Woomy projects.
+This codebase is based on core server files from August 2020 combined with older Arras source files. The original game Woomy Arras was created by Clarise. Later, Drako Hyena recovered and rebuilt offline versions of the game files around 2018, which became the foundation for many offline Woomy projects.
 
 This repository was later forked and modified by Spade1354, and is currently being expanded and maintained by LevyMaze.
 
