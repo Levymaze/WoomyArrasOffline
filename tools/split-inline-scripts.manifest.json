@@ -1,0 +1,204 @@
+﻿{
+  "indexHtml": "index.html",
+  "outDir": "js",
+  "extracted": [
+    {
+      "index": 1,
+      "kind": "inline",
+      "output": "js/01-websocket-polyfill.js",
+      "bytes": 3489
+    },
+    {
+      "index": 2,
+      "kind": "inline",
+      "output": "js/02-process-polyfill.js",
+      "bytes": 300
+    },
+    {
+      "index": 3,
+      "kind": "inline",
+      "output": "js/03-require-polyfill.js",
+      "bytes": 541
+    },
+    {
+      "index": 4,
+      "kind": "inline",
+      "output": "js/04-globals-polyfill.js",
+      "bytes": 16
+    },
+    {
+      "index": 5,
+      "kind": "inline",
+      "output": "js/05-defs-export.js",
+      "bytes": 754
+    },
+    {
+      "index": 6,
+      "kind": "inline",
+      "output": "js/06-boot-origin.js",
+      "bytes": 50818
+    },
+    {
+      "index": 7,
+      "kind": "inline",
+      "output": "js/07-mockup-polyfill.js",
+      "bytes": 1717320
+    },
+    {
+      "index": 8,
+      "kind": "inline",
+      "output": "js/08-part.js",
+      "bytes": 17113891
+    },
+    {
+      "index": 9,
+      "kind": "inline",
+      "output": "js/09-part.js",
+      "bytes": 12892
+    },
+    {
+      "index": 10,
+      "kind": "inline",
+      "output": "js/10-part.js",
+      "bytes": 5864
+    },
+    {
+      "index": 11,
+      "kind": "inline",
+      "output": "js/11-part.js",
+      "bytes": 2555
+    },
+    {
+      "index": 12,
+      "kind": "inline",
+      "output": "js/12-part.js",
+      "bytes": 4589
+    },
+    {
+      "index": 13,
+      "kind": "inline",
+      "output": "js/13-part.js",
+      "bytes": 5023
+    },
+    {
+      "index": 14,
+      "kind": "inline",
+      "output": "js/14-part.js",
+      "bytes": 5663
+    },
+    {
+      "index": 15,
+      "kind": "inline",
+      "output": "js/15-part.js",
+      "bytes": 105264
+    },
+    {
+      "index": 16,
+      "kind": "inline",
+      "output": "js/16-part.js",
+      "bytes": 23047
+    },
+    {
+      "index": 17,
+      "kind": "inline",
+      "output": "js/17-part.js",
+      "bytes": 4373223
+    },
+    {
+      "index": 18,
+      "kind": "inline",
+      "output": "js/18-part.js",
+      "bytes": 3174
+    },
+    {
+      "index": 19,
+      "kind": "inline",
+      "output": "js/19-part.js",
+      "bytes": 744
+    },
+    {
+      "index": 20,
+      "kind": "inline",
+      "output": "js/20-part.js",
+      "bytes": 4179
+    },
+    {
+      "index": 21,
+      "kind": "inline",
+      "output": "js/21-part.js",
+      "bytes": 1382
+    },
+    {
+      "index": 22,
+      "kind": "inline",
+      "output": "js/22-part.js",
+      "bytes": 3419
+    },
+    {
+      "index": 23,
+      "kind": "inline",
+      "output": "js/23-part.js",
+      "bytes": 3193
+    },
+    {
+      "index": 24,
+      "kind": "inline",
+      "output": "js/24-part.js",
+      "bytes": 11515
+    },
+    {
+      "index": 25,
+      "kind": "inline",
+      "output": "js/25-part.js",
+      "bytes": 514
+    },
+    {
+      "index": 26,
+      "kind": "inline",
+      "output": "js/26-tokens.js",
+      "bytes": 3157
+    },
+    {
+      "index": 27,
+      "kind": "inline",
+      "output": "js/27-tankgen-results.js",
+      "bytes": 17113902
+    },
+    {
+      "index": 28,
+      "kind": "inline",
+      "output": "js/28-part.js",
+      "bytes": 2086
+    },
+    {
+      "index": 29,
+      "kind": "external",
+      "preserved": true
+    },
+    {
+      "index": 30,
+      "kind": "inline",
+      "output": "js/30-part.js",
+      "bytes": 129
+    },
+    {
+      "index": 31,
+      "kind": "inline",
+      "output": "js/31-token-logic.js",
+      "bytes": 21438
+    },
+    {
+      "index": 32,
+      "kind": "inline",
+      "output": "js/32-mockup-polyfill.js",
+      "bytes": 821325
+    },
+    {
+      "index": 33,
+      "kind": "inline",
+      "output": "js/33-part.js",
+      "bytes": 2634
+    }
+  ]
+}
+

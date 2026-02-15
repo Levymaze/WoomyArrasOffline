@@ -61,12 +61,12 @@ These modes are mainly for experimentation and fun while keeping the original Ar
 
 Added multiple admin commands for testing and moderation:
 
-- I – Increase entity score
-- U – Decrease entity score
-- H – Instantly heal any entity
-- Q – Instant teleport with temporary immunity
-- + – Increase Field of View
-- - – Decrease Field of View
+- I - Increase entity score
+- U - Decrease entity score
+- H - Instantly heal any entity
+- Q - Instant teleport with temporary immunity
+- + - Increase Field of View
+- - - Decrease Field of View
 
 Also added:
 
@@ -84,6 +84,16 @@ More features may be added over time.
 
 One current issue is that much of the logic is cramped and not well optimized due to legacy structure. Refactoring will take time, but improvements will be made gradually.
 
-If you’re experimenting or building on this, feel free to explore and modify it.
+If you're experimenting or building on this, feel free to explore and modify it.
 
 ---
+
+## Code Layout (JS Split)
+
+This repo originally shipped most client code as many huge inline `<script>` blocks inside `index.html`.
+Those scripts have been extracted into separate files under `js/` to make the code easier to navigate and to
+reduce the chance of accidentally committing secrets inside HTML history.
+
+- `index.html`: HTML + script loading order (now uses `<script src="js/...">`).
+- `js/`: extracted client scripts, loaded in the same order as before.
+- `tools/split-inline-scripts.js`: one-off splitter used to extract inline scripts (kept for reference).
