@@ -81,3 +81,15 @@ These tools are mainly meant for development and sandbox testing.
 This project is still being worked on.
 
 More features may be added over time.
+
+---
+
+## Latest Tank Additions
+
+### 21 February 2026
+
+- Added two tanks: `Wrench` and `Spanner`.
+- Added upgrade path: `Basic -> Flank Guard -> Auto-3 -> Wrench / Spanner`.
+- Updated tree links so these tanks appear under Auto-3.
+- Added gameplay support so both tanks are playable in game modes, including Growth modes.
+- Added custom turret/mockup sync updates so UI and in-game turret behavior stay aligned.

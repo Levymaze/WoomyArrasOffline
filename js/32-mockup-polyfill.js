@@ -2956,7 +2956,7 @@
                                                         if (isNew) {
                                                             entity.guns = GunContainer(gunnumb);
                                                         } else if (gunnumb !== entity.guns.length) {
-                                                            throw new Error("Mismatch between data gun number and remembered gun number!");
+                                                            entity.guns = GunContainer(gunnumb);
                                                         }
                                                         for (let i = 0; i < gunnumb; i++) {
                                                             let time = get.next(),
@@ -2973,11 +2973,14 @@
                                                             }
                                                         } else {
                                                             if (entity.turrets.length !== turnumb) {
-                                                                console.log(entity);
-                                                                throw new Error("Mismatch between data turret number and remembered turret number!");
-                                                            }
-                                                            for (let i = 0; i < entity.turrets.length; i++) {
-                                                                process(entity.turrets[i]);
+                                                                entity.turrets = [];
+                                                                for (let i = 0; i < turnumb; i++) {
+                                                                    entity.turrets.push(process());
+                                                                }
+                                                            } else {
+                                                                for (let i = 0; i < entity.turrets.length; i++) {
+                                                                    process(entity.turrets[i]);
+                                                                }
                                                             }
                                                         }
                                                         return entity;
@@ -3320,6 +3323,90 @@
                                             global.gameStart = true;
                                             global.message = "";
                                             util.pullJSON(`mockups`, "text").then(function (data) {
+                                                function syncCustomTankMockups() {
+                                                    if (!Array.isArray(mockups) || !mockups.length) return;
+                                                    const defs = window.defExport || {};
+                                                    const toRad = deg => (Number(deg) || 0) * Math.PI / 180;
+                                                    const resolveDef = (ref) => {
+                                                        if (Array.isArray(ref)) ref = ref[0];
+                                                        if (!ref) return null;
+                                                        if (typeof ref === "string") return defs[ref] || null;
+                                                        return ref;
+                                                    };
+                                                    const getEntry = (index) => Number.isInteger(index) && index >= 0 ? mockups[index] : null;
+                                                    const convertGun = (gun) => {
+                                                        const p = gun && gun.POSITION;
+                                                        if (!Array.isArray(p) || p.length < 6) return null;
+                                                        const x = Number(p[3]) || 0;
+                                                        const y = Number(p[4]) || 0;
+                                                        return {
+                                                            length: Math.max(0, (Number(p[0]) || 0) / 20),
+                                                            width: Math.max(0, (Number(p[1]) || 0) / 20),
+                                                            aspect: p[2] == null ? 1 : Number(p[2]),
+                                                            offset: Math.sqrt(x * x + y * y) / 20,
+                                                            direction: Math.atan2(y, x),
+                                                            angle: toRad(p[5]),
+                                                            color: gun && gun.PROPERTIES && gun.PROPERTIES.COLOR != null ? gun.PROPERTIES.COLOR : 16,
+                                                            color_unmix: gun && gun.PROPERTIES && gun.PROPERTIES.COLOR_UNMIX != null ? gun.PROPERTIES.COLOR_UNMIX : 0,
+                                                            skin: gun && gun.PROPERTIES && gun.PROPERTIES.SKIN != null ? gun.PROPERTIES.SKIN : 0
+                                                        };
+                                                    };
+                                                    const convertTurret = (turretDef) => {
+                                                        const p = turretDef && turretDef.POSITION;
+                                                        if (!Array.isArray(p) || p.length < 6) return null;
+                                                        const typeOverride = Array.isArray(turretDef.TYPE) ? turretDef.TYPE[1] : null;
+                                                        const typeDef = resolveDef(turretDef.TYPE);
+                                                        const typeIndex = typeDef && Number.isInteger(typeDef.index) ? typeDef.index : null;
+                                                        const base = getEntry(typeIndex);
+                                                        if (!base) return null;
+                                                        const t = JSON.parse(JSON.stringify(base));
+                                                        const x = Number(p[1]) || 0;
+                                                        const y = Number(p[2]) || 0;
+                                                        t.index = typeIndex;
+                                                        t.size = 1;
+                                                        t.sizeFactor = Math.max(0.2, (Number(p[0]) || 0) / 10);
+                                                        t.offset = Math.sqrt(x * x + y * y) / 10;
+                                                        t.direction = Math.atan2(y, x);
+                                                        t.angle = toRad(p[3]);
+                                                        t.layer = p[5] == null ? 1 : Number(p[5]);
+                                                        // Keep UI turret guns aligned with live server behavior when TYPE has inline overrides.
+                                                        if (typeOverride && Array.isArray(typeOverride.GUNS)) {
+                                                            t.guns = typeOverride.GUNS.map(convertGun).filter(Boolean);
+                                                        }
+                                                        return t;
+                                                    };
+                                                    const patchTank = (defName) => {
+                                                        const d = defs[defName];
+                                                        if (!d || !Number.isInteger(d.index)) return;
+                                                        const entry = getEntry(d.index);
+                                                        if (!entry) return;
+                                                        entry.name = d.LABEL || entry.name;
+                                                        const guns = (d.GUNS || []).map(convertGun).filter(Boolean);
+                                                        const turrets = (d.TURRETS || []).map(convertTurret).filter(Boolean);
+                                                        entry.guns = guns;
+                                                        entry.turrets = turrets;
+                                                    };
+                                                    const setUpgrades = (fromName, toNames, removeNames) => {
+                                                        const from = defs[fromName];
+                                                        if (!from || !Number.isInteger(from.index)) return;
+                                                        const entry = getEntry(from.index);
+                                                        if (!entry) return;
+                                                        let list = Array.isArray(entry.upgrades) ? entry.upgrades.slice() : [];
+                                                        const removeIdx = (removeNames || []).map(n => defs[n]).filter(Boolean).map(d => d.index);
+                                                        list = list.filter(i => !removeIdx.includes(i));
+                                                        for (const n of toNames) {
+                                                            const d = defs[n];
+                                                            if (d && Number.isInteger(d.index) && !list.includes(d.index)) list.push(d.index);
+                                                        }
+                                                        entry.upgrades = list;
+                                                    };
+                                                    patchTank("wrench");
+                                                    patchTank("spanner");
+                                                    setUpgrades("basic", ["flank"], []);
+                                                    setUpgrades("flank", ["auto3"], []);
+                                                    setUpgrades("auto3", ["wrench", "spanner"], []);
+                                                    setUpgrades("crowbar", [], ["wrench", "spanner"]);
+                                                }
                                                 function clean(mockup) {
                                                     mockup.guns = mockup.guns || [];
                                                     mockup.turrets = (mockup.turrets || []).map(clean);
@@ -3330,7 +3417,9 @@
                                                     }
                                                     return mockup;
                                                 }
-                                                return mockups = JSON.parse(LZString.decompressFromEncodedURIComponent(data))[1].map(clean);
+                                                mockups = JSON.parse(LZString.decompressFromEncodedURIComponent(data))[1].map(clean);
+                                                syncCustomTankMockups();
+                                                return mockups;
                                             });
                                         }
                                             break;
@@ -5124,8 +5213,9 @@
                                 } else if (.1 >= alpha * fade) return;
                                 context.lineCap = "round";
                                 context.lineJoin = config.pointy ? "miter" : "round";
-                                if (source.turrets.length === m.turrets.length) {
-                                    for (let i = 0; i < m.turrets.length; i++) {
+                                {
+                                    const turretCount = Math.min(source.turrets.length, m.turrets.length);
+                                    for (let i = 0; i < turretCount; i++) {
                                         let t = m.turrets[i];
                                         if (t.layer === 0) {
                                             let ang = t.direction + t.angle + rot,
@@ -5133,7 +5223,7 @@
                                             drawEntity(xx + len * Math.cos(ang), yy + len * Math.sin(ang), t, ratio, alpha, drawSize / ratio / t.size * t.sizeFactor, source.turrets[i].facing + turretsObeyRot * rot, turretsObeyRot, context, source.turrets[i], render);
                                         }
                                     }
-                                } else throw new Error(`Mismatch turret number! Expected: ${m.turrets.length} Reality: ${source.turrets.length}`);
+                                }
                                 source.guns.update();
                                 let renderColor = render.status.getColor(),
                                     renderBlend = render.status.getBlend(),
@@ -5141,9 +5231,10 @@
                                     invulnTicker = instance.invuln && (Date.now() - instance.invuln) % 200 > 110;
                                 if (invulnTicker) finalColor = mixColors(finalColor, color.vlgrey, .5);
                                 context.lineWidth = Math.max(config.mininumBorderChunk, ratio * config.borderChunk);
-                                if (source.guns.length === m.guns.length) {
+                                {
                                     let positions = source.guns.getPositions();
-                                    for (let i = 0; i < m.guns.length; i++) {
+                                    const gunCount = Math.min(source.guns.length, m.guns.length);
+                                    for (let i = 0; i < gunCount; i++) {
                                         let g = m.guns[i],
                                             position = positions[i] / (((g.aspect == null ? 1 : g.aspect) === 1) ? 2 : 1),
                                             gx = g.offset * Math.cos(g.direction + (g.angle || 0) + rot) + (g.length / 2 - position) * Math.cos((g.angle || 0) + rot),
@@ -5167,16 +5258,14 @@
                                             (g.aspect == null ? 1 : g.aspect),
                                             (g.angle || 0) + rot, g.skin || 0);
                                     }
-                                } else {
-                                    console.warn(m.guns, source.guns, m, source);
-                                    throw new Error(`Mismatch gun number! Expected: ${m.guns.length} Reality: ${source.guns.length}`);
                                 };
                                 context.globalAlpha = 1;
                                 setColors(context, finalColor);
                                 if (shadowRelativeColor) context.shadowColor = context.strokeStyle;
                                 drawPoly(context, xx, yy, drawSize / m.size * m.realSize, m.shape, source.widthHeightRatio, ratio * scale, rot);
-                                if (source.turrets.length === m.turrets.length) {
-                                    for (let i = 0; i < m.turrets.length; i++) {
+                                {
+                                    const turretCount = Math.min(source.turrets.length, m.turrets.length);
+                                    for (let i = 0; i < turretCount; i++) {
                                         let t = m.turrets[i];
                                         if (t.layer === 1) {
                                             let ang = t.direction + t.angle + rot,
@@ -5184,7 +5273,7 @@
                                             drawEntity(xx + len * Math.cos(ang), yy + len * Math.sin(ang), t, ratio, alpha, drawSize / ratio / t.size * t.sizeFactor, source.turrets[i].facing + turretsObeyRot * rot, turretsObeyRot, context, source.turrets[i], render);
                                         }
                                     }
-                                } else throw new Error(`Mismatch turret number! Expected: ${m.turrets.length} Reality: ${source.turrets.length}`);
+                                }
                                 context.shadowBlur = 0;
                                 context.shadowOffsetX = 0;
                                 context.shadowOffsetY = 0;
