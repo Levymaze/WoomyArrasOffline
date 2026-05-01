@@ -1950,11 +1950,30 @@
                         function getEntityImageFromMockup(index, color) {
                             let mockup = mockups[index];
                             if (!mockup) {
-                                const fallback = mockups[0];
-                                if (!fallback) throw new Error("Failed to find mockup " + index);
-                                console.warn("Missing mockup index", index, "- falling back to index 0");
+                                const fallback =
+                                    mockups.find(m => m && typeof m.name === "string" && m.name.toLowerCase() === "bullet") ||
+                                    mockups.find(m => m && typeof m.name === "string" && m.name.toLowerCase().includes("bullet")) || {
+                                        index: -1,
+                                        x: 0,
+                                        y: 0,
+                                        size: 1,
+                                        realSize: 1,
+                                        color: 16,
+                                        facing: 0,
+                                        shape: 0,
+                                        name: "Fallback Bullet",
+                                        layer: 0,
+                                        guns: [],
+                                        turrets: [],
+                                        position: {
+                                            axis: 1,
+                                            middle: { x: 0, y: 0 },
+                                            points: []
+                                        }
+                                    };
+                                console.warn("Missing mockup index", index, "- falling back to bullet-like mockup");
                                 mockup = fallback;
-                                index = 0;
+                                index = Number.isInteger(fallback.index) ? fallback.index : -1;
                             }
                             color = mockup.color == null || mockup.color === 16 ? arguments[1] : mockup.color;
                             return {
@@ -2054,9 +2073,7 @@
                                     return {
                                         place: function (index, ...a) {
                                             if (index >= data.length) {
-                                                logger.norm(index);
-                                                logger.norm(data);
-                                                throw new Error("Trying to reference a clickable outside a region!");
+                                                while (index >= data.length) data.push(Clickable());
                                             }
                                             data[index].set(...a);
                                         },
@@ -2073,7 +2090,7 @@
                             }();
                             return {
                                 stat: Region(10),
-                                upgrade: Region(30),
+                                upgrade: Region(96),
                                 hover: Region(1),
                                 skipUpgrades: Region(1),
                                 mobileClicks: Region(9/*global.mobileClickables.length*/),
@@ -2487,13 +2504,94 @@
                             };
                             util.retrieveFromLocalStorage("playerNameInput");
                             util.retrieveFromLocalStorage("playerKeyInput");
+                            const gamemodeSelect = document.getElementById("gamemode");
+                            const teamSelectButton = document.getElementById("teamSelectButton");
+                            const gamemodeStorageKey = "woomyGamemode";
+                            const teamChoiceStorageKey = "woomyTeamChoice";
+                            const teamNames = ["Auto", "Blue", "Red", "Green", "Purple", "Teal", "Lime", "Orange", "Grey"];
+                            const twoTeamModes = new Set(["2dom", "2mot", "p2mot", "2tag", "2skrim", "carrierBattle", "testing"]);
+                            const fourTeamModes = new Set(["4dom", "4mot", "4tag", "4tdm", "4skrim"]);
+                            let selectedTeamChoice = Number(localStorage.getItem(teamChoiceStorageKey));
+                            if (!Number.isInteger(selectedTeamChoice) || selectedTeamChoice < 0 || selectedTeamChoice > 8) {
+                                selectedTeamChoice = 0;
+                            }
+                            // Always start a new menu session on Auto to avoid stale saved team forcing one side.
+                            if (selectedTeamChoice !== 0) {
+                                selectedTeamChoice = 0;
+                                localStorage.setItem(teamChoiceStorageKey, "0");
+                            }
+                            function normalizePlayableMode(mode) {
+                                if (!gamemodeSelect) return "ffa";
+                                const fallback = "ffa";
+                                const value = String(mode || "");
+                                if (!value || value.startsWith("menuSection")) return fallback;
+                                const option = gamemodeSelect.querySelector(`option[value="${value}"]`);
+                                if (!option || option.disabled) return fallback;
+                                return value;
+                            }
+                            function getTeamCountForMode(mode) {
+                                mode = normalizePlayableMode(mode);
+                                try {
+                                    const cfg = (window.require && window.require("./config-" + mode)) || (window.require && window.require(mode));
+                                    const count = Number(cfg && cfg.TEAM_AMOUNT);
+                                    if (Number.isFinite(count) && count > 0) return Math.min(8, Math.round(count));
+                                } catch (e) {}
+                                if (twoTeamModes.has(mode)) return 2;
+                                if (fourTeamModes.has(mode)) return 4;
+                                if (mode === "growthmazetdm") return 4;
+                                if (mode === "tdm" || mode === "mazetdm" || mode === "growthtdm") return 3;
+                                return 0;
+                            }
+                            function sanitizeTeamChoice(choice, maxTeams) {
+                                let parsed = Number(choice);
+                                if (!Number.isInteger(parsed) || parsed < 0 || parsed > 8) parsed = 0;
+                                if (maxTeams <= 0) return 0;
+                                return Math.min(parsed, maxTeams);
+                            }
+                            function updateTeamSelectButton() {
+                                if (!gamemodeSelect || !teamSelectButton) return;
+                                gamemodeSelect.value = normalizePlayableMode(gamemodeSelect.value);
+                                const maxTeams = getTeamCountForMode(gamemodeSelect.value);
+                                selectedTeamChoice = sanitizeTeamChoice(selectedTeamChoice, maxTeams);
+                                teamSelectButton.style.display = maxTeams > 0 ? "" : "none";
+                                teamSelectButton.textContent = "Team: " + teamNames[selectedTeamChoice];
+                            }
+                            function getSelectedTeamChoice() {
+                                if (!gamemodeSelect) return 0;
+                                return sanitizeTeamChoice(selectedTeamChoice, getTeamCountForMode(normalizePlayableMode(gamemodeSelect.value)));
+                            }
+                            window.__woomyGetSpawnTeamChoice = getSelectedTeamChoice;
+                            if (gamemodeSelect && teamSelectButton) {
+                                const storedMode = normalizePlayableMode(localStorage.getItem(gamemodeStorageKey));
+                                gamemodeSelect.value = storedMode || normalizePlayableMode(gamemodeSelect.value);
+                                gamemodeSelect.addEventListener("change", function () {
+                                    gamemodeSelect.value = normalizePlayableMode(gamemodeSelect.value);
+                                    localStorage.setItem(gamemodeStorageKey, gamemodeSelect.value);
+                                    updateTeamSelectButton();
+                                });
+                                teamSelectButton.onclick = function () {
+                                    const maxTeams = getTeamCountForMode(gamemodeSelect.value);
+                                    if (maxTeams <= 0) return;
+                                    selectedTeamChoice += 1;
+                                    if (selectedTeamChoice > maxTeams) selectedTeamChoice = 0;
+                                    selectedTeamChoice = sanitizeTeamChoice(selectedTeamChoice, maxTeams);
+                                    localStorage.setItem(teamChoiceStorageKey, String(selectedTeamChoice));
+                                    updateTeamSelectButton();
+                                };
+                                updateTeamSelectButton();
+                            }
                             document.getElementById("startButton").onclick = function () {
-                                const selectedMode = document.getElementById("gamemode").value;
+                                const selectedMode = normalizePlayableMode(document.getElementById("gamemode").value);
+                                if (gamemodeSelect) {
+                                    gamemodeSelect.value = selectedMode;
+                                    localStorage.setItem(gamemodeStorageKey, selectedMode);
+                                    updateTeamSelectButton();
+                                }
                                 window.__gamemodePolyfill = "-" + selectedMode
                                 window.__growthModePolyfill = selectedMode === "growth";
                                 if (!window.__woomyServerLoaded) {
                                     let scrpt = document.createElement("script")
-                                    scrpt.src = "./server.js"
+                                    scrpt.src = "./server.js?v=20260224a"
                                     document.head.appendChild(scrpt)
                                     window.__woomyServerLoaded = true
                                 }
@@ -2748,7 +2846,7 @@
                                                             }
                                                         },
                                                         getFade: function () {
-                                                            return state === "dying" || state === "killed" ? 1 - Math.min(1, (getNow() - time) / 300) : 1;
+                                                            return state === "dying" || state === "killed" ? 1 - Math.min(1, (getNow() - time) / 360) : 1;
                                                         },
                                                         getColor: function () {
                                                             return "#FFFFFF";
@@ -2900,7 +2998,8 @@
                                                             entity.y = get.next();
                                                             entity.vx = get.next();
                                                             entity.vy = get.next();
-                                                            entity.size = get.next();
+                                                            const decodedSize = get.next();
+                                                            entity.size = safePositiveNumber(decodedSize, 1);
                                                             entity.facing = get.next();
                                                             entity.twiggle = (flags & 1);
                                                             entity.layer = (flags & 2) ? get.next() : 0;
@@ -2955,6 +3054,9 @@
                                                             }
                                                             entity.render.health.set(entity.health);
                                                             entity.render.shield.set(entity.shield);
+                                                            if (entity.health <= 0 && entity.render && entity.render.status) {
+                                                                entity.render.status.set("killed");
+                                                            }
                                                             if (!isNew && entity.oldIndex !== entity.index) isNew = true;
                                                             entity.oldIndex = entity.index;
                                                         }
@@ -3312,7 +3414,7 @@
                                                 logger.info("The server has welcomed us to the game room! Sending spawn request.");
                                                 let socketOut = global.playerName.split('');
                                                 for (let i = 0; i < socketOut.length; i++) socketOut[i] = socketOut[i].charCodeAt();
-                                                socket.talk("s", socketOut.toString(), 1);
+                                                socket.talk("s", socketOut.toString(), 1, window.__woomyGetSpawnTeamChoice ? window.__woomyGetSpawnTeamChoice() : 0);
                                                 if (global.mobile) window.canvas.autoUpgrade();
                                             }
                                         }
@@ -3518,6 +3620,31 @@
                                 { position: [3, 32, 1, 28, 0, 0, 0], draw_z: 3 },
                                 { position: [13, 26, 1.01, 15.5, 0, 0, 0], draw_z: 2 }
                                                     ]);
+                                                    // Big Mac: 1 real firing barrel + 2 visual-only overlays.
+                                                    // recoil_from: 0 keeps both decorative pieces synced to heavy-shot recoil.
+                                                    setTankMockupGuns("bigMac", [
+                                { position: [38, 24, 1, 0, 0, 0, 0], draw_z: 3 },
+                                { position: [15, 29.95, 1.8, -10, 0, 0, 0], draw_z: 4, color: 16 },
+                                { position: [40, 55, 1, 5, 0, 0, 0], draw_z: 5, color: 16, recoil_from: 0 }
+                                                    ]);
+                                                    // Bigger Cheese UI barrels: main drone barrel + visual overlay barrel.
+                                                    // recoil_from: 0 makes the overlay mimic the main barrel recoil in client rendering.
+                                                    setTankMockupGuns("overload", [
+                                { position: [10, 19.5, 1.2, 16, 0, 0, 0], draw_z: 4 },
+                                { position: [35, 40, 1.5, 0, 0, 0, 0], draw_z: 5, color: 16, recoil_from: 0 }
+                                                    ]);
+                                                    // Headman (heavyOverlord) UI barrels: 4 real + 4 visual overlays.
+                                                    // Visual overlay barrels reuse Bigger Cheese visual style and mirror recoil per direction.
+                                                    setTankMockupGuns("heavyOverlord", [
+                                { position: [7, 14.5, 1.2, 12, 0, 0, 0], draw_z: 4 },
+                                { position: [7, 14.5, 1.2, 12, 0, 90, 0], draw_z: 4 },
+                                { position: [7, 14.5, 1.2, 12, 0, 180, 0], draw_z: 4 },
+                                { position: [7, 14.5, 1.2, 12, 0, 270, 0], draw_z: 4 },
+                                { position: [16.2, 30.5, 1.35, 12, 0, 0, 0], draw_z: 5, color: 16, recoil_from: 0 },
+                                { position: [16.2, 30.5, 1.35, 12, 0, 90, 0], draw_z: 4, color: 16, recoil_from: 1 },
+                                { position: [16.2, 30.5, 1.35, 12, 0, 180, 0], draw_z: 5, color: 16, recoil_from: 2 },
+                                { position: [16.2, 30.5, 1.35, 12, 0, 270, 0], draw_z: 4, color: 16, recoil_from: 3 }
+                                                    ]);
                                                     // Top Banana minion UI override with a decorative top barrel.
                                                     // recoil_from: 0 maps both barrels to the real minion gun recoil.
                                                     setTankMockupGuns("ultraSpawnerMinion", [
@@ -3538,6 +3665,7 @@
                                                     setUpgrades("flank", ["auto3"], []);
                                                     setUpgrades("auto3", ["crowbarT4"], ["wrench", "spanner"]);
                                                     setUpgrades("crowbarT4", ["wrench", "spanner"], []);
+                                                    setUpgrades("annihilator", ["bigMac"], []);
                                                     setUpgrades("factory", [], ["factorySpawner"]);
                                                     setUpgrades("littleFactory", ["megaSpawner"], ["ultraSpawner"]);
                                                     setUpgrades("megaSpawner", ["factorySpawner", "ultraSpawner"], []);
@@ -3864,6 +3992,12 @@
                             ctx.fillRect(0, 0, global.screenWidth, global.screenHeight);
                             ctx.globalAlpha = 1;
                         }
+                        function safePositiveNumber(value, fallback = 0) {
+                            const n = Number(value);
+                            if (!Number.isFinite(n)) return fallback;
+                            const magnitude = Math.abs(n);
+                            return magnitude > 0 ? magnitude : fallback;
+                        }
                         const fontWidth = "bold";
                         const measureText = (() => {
                             return (text, fontSize, twod = false, font = "Ubuntu") => {
@@ -3960,6 +4094,8 @@
                         }
 
                         function drawGuiCircle(x, y, radius, stroke = false) {
+                            radius = safePositiveNumber(radius, 0);
+                            if (radius <= 0) return;
                             ctx.beginPath();
                             ctx.arc(x, y, radius, 0, Math.PI * 2);
                             stroke ? ctx.stroke() : ctx.fill();
@@ -3984,6 +4120,8 @@
                         }
                         let drawEntity = function () {
                             function drawPoly(context, centerX, centerY, radius, sides, widthHeightRatio, mainRatio) {
+                                radius = safePositiveNumber(radius, 0);
+                                if (radius <= 0) return;
                                 let angle = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 0,
                                     fill = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : 1;
                                 if (!Array.isArray(sides)) angle += sides % 2 ? 0 : Math.PI / sides;
@@ -5142,6 +5280,8 @@
                             function drawGun(context, x, y, length, height, aspect, angle, skin) {
                                 let h = [];
                                 h = aspect > 0 ? [height * aspect, height] : [height, -height * aspect];
+                                const ellipseLength = safePositiveNumber(length, 0);
+                                const ellipseHeight = safePositiveNumber(height, 0);
                                 let r = [
                                     Math.atan2(h[0], length),
                                     Math.atan2(h[1], length)
@@ -5175,7 +5315,9 @@
                                         context.bezierCurveTo(x + l[0] * Math.cos(angle - r[0]) * .25, y + l[0] * Math.sin(angle - r[0]) * .25, x + l[0] * Math.cos(angle + r[0]) * .25, y + l[0] * Math.sin(angle + r[0]) * .25, x + l[0] * Math.cos(angle + r[0]), y + l[0] * Math.sin(angle + r[0]));
                                         break;
                                     case 3: // Round Barrel
-                                        context.ellipse(x, y, length, height, angle, 0, 2 * Math.PI, true);
+                                        if (ellipseLength > 0 && ellipseHeight > 0) {
+                                            context.ellipse(x, y, ellipseLength, ellipseHeight, angle, 0, 2 * Math.PI, true);
+                                        }
                                         break;
                                     case 4: // Spiky Barrel
                                         context.lineTo(x + l[0] * Math.cos(angle + r[0]), y + l[0] * Math.sin(angle + r[0]));
@@ -5256,8 +5398,10 @@
                                         context.lineTo(x + l[0] * Math.cos(angle - r[0]), y + l[0] * Math.sin(angle - r[0]));
                                         break;
                                     case 17: // Circle with hole in it
-                                        context.ellipse(x, y, length, height, angle, 0, 2 * Math.PI, true);
-                                        context.ellipse(x, y, length * 0.8, height * 0.8, angle, 0, 2 * Math.PI, false);
+                                        if (ellipseLength > 0 && ellipseHeight > 0) {
+                                            context.ellipse(x, y, ellipseLength, ellipseHeight, angle, 0, 2 * Math.PI, true);
+                                            context.ellipse(x, y, ellipseLength * 0.8, ellipseHeight * 0.8, angle, 0, 2 * Math.PI, false);
+                                        }
                                         break;
                                 }
                                 context.lineJoin = config.pointy ? "miter" : "round";
@@ -5275,12 +5419,13 @@
                                     render = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : instance.render,
                                     context = assignedContext || ctx,
                                     fade = turretInfo ? 1 : render.status.getFade(),
-                                    drawSize = scale * ratio * (turretInfo ? instance.size : render.size),
+                                    drawSize = safePositiveNumber(scale * ratio * (turretInfo ? instance.size : render.size), 0),
                                     m = mockups[instance.index],
                                     xx = x,
                                     yy = y,
                                     source = turretInfo === 0 ? instance : turretInfo,
                                     shadowRelativeColor = false;
+                                if (drawSize <= 0 || !m) return;
                                 //["Disabled", "Light Blur", "Dark Blur", "Colorful Blur", "Light",
                                 //"Dark", "Light Stroke", "Dark Stroke", "Colorful Lightshow", "Fake 3D"]
                                 switch (config.shaders) {
@@ -5350,10 +5495,15 @@
                                     drawSize *= (1 + 0.5 * (1 - fade) * config.deathExpandRatio);
                                 } //drawSize *= 1 + (render.expandsWithDeath ? .5 : .2) * (1 - death);
                                 if (config.fancyAnimations && assignedContext !== ctx2 && ((alpha < 1 && alpha > 0) || (fade < 1 && fade > 0))) {
-                                    context = ctx2;
-                                    context.canvas.width = Math.max(context.canvas.height = drawSize * m.position.axis + ratio * 7.5 * instance.size, 1); //20,100
-                                    xx = context.canvas.width / 2 - drawSize * m.position.axis * m.position.middle.x * Math.cos(rot) / 4;
-                                    yy = context.canvas.height / 2 - drawSize * m.position.axis * m.position.middle.x * Math.sin(rot) / 4;
+                                    const fancyCanvasSize = safePositiveNumber(drawSize * m.position.axis + ratio * 7.5 * instance.size, 0);
+                                    if (Number.isFinite(fancyCanvasSize) && fancyCanvasSize > 0) {
+                                        context = ctx2;
+                                        const safeCanvasSize = Math.max(1, Math.ceil(fancyCanvasSize));
+                                        context.canvas.width = safeCanvasSize; //20,100
+                                        context.canvas.height = safeCanvasSize;
+                                        xx = context.canvas.width / 2 - drawSize * m.position.axis * m.position.middle.x * Math.cos(rot) / 4;
+                                        yy = context.canvas.height / 2 - drawSize * m.position.axis * m.position.middle.x * Math.sin(rot) / 4;
+                                    }
                                 } else if (.1 >= alpha * fade) return;
                                 context.lineCap = "round";
                                 context.lineJoin = config.pointy ? "miter" : "round";
@@ -5362,9 +5512,11 @@
                                     for (let i = 0; i < turretCount; i++) {
                                         let t = m.turrets[i];
                                         if (t.layer === 0) {
+                                            const tSize = safePositiveNumber(t.size, 0);
+                                            if (tSize <= 0) continue;
                                             let ang = t.direction + t.angle + rot,
                                                 len = t.offset * drawSize;
-                                            drawEntity(xx + len * Math.cos(ang), yy + len * Math.sin(ang), t, ratio, alpha, drawSize / ratio / t.size * t.sizeFactor, source.turrets[i].facing + turretsObeyRot * rot, turretsObeyRot, context, source.turrets[i], render);
+                                            drawEntity(xx + len * Math.cos(ang), yy + len * Math.sin(ang), t, ratio, alpha, drawSize / ratio / tSize * t.sizeFactor, source.turrets[i].facing + turretsObeyRot * rot, turretsObeyRot, context, source.turrets[i], render);
                                         }
                                     }
                                 }
@@ -5377,8 +5529,10 @@
                                 context.lineWidth = Math.max(config.mininumBorderChunk, ratio * config.borderChunk);
                                 {
                                     let positions = source.guns.getPositions();
+                                    const sourceGunCount = Number.isFinite(source.guns.length) ? source.guns.length : 0;
+                                    const drawMockupOverlays = sourceGunCount > 0;
                                     const gunOrder = Array.from({
-                                        length: m.guns.length
+                                        length: drawMockupOverlays ? m.guns.length : Math.min(sourceGunCount, m.guns.length)
                                     }, (_, i) => i).sort((a, b) => {
                                         const ga = m.guns[a] || {};
                                         const gb = m.guns[b] || {};
@@ -5389,8 +5543,11 @@
                                     for (const i of gunOrder) {
                                         let g = m.guns[i],
                                             recoilSource = Number.isInteger(g.recoil_source) ? g.recoil_source : i;
-                                        if (recoilSource < 0 || recoilSource >= positions.length) continue;
-                                        let position = positions[recoilSource] / (((g.aspect == null ? 1 : g.aspect) === 1) ? 2 : 1),
+                                        const recoilPosition =
+                                            recoilSource >= 0 && recoilSource < positions.length
+                                                ? positions[recoilSource]
+                                                : 0;
+                                        let position = recoilPosition / (((g.aspect == null ? 1 : g.aspect) === 1) ? 2 : 1),
                                             gx = g.offset * Math.cos(g.direction + (g.angle || 0) + rot) + (g.length / 2 - position) * Math.cos((g.angle || 0) + rot),
                                             gy = g.offset * Math.sin(g.direction + (g.angle || 0) + rot) + (g.length / 2 - position) * Math.sin((g.angle || 0) + rot),
                                             gColor = mixColors(getColor(g.color == null ? 16 : g.color), renderColor, renderBlend);
@@ -5408,7 +5565,10 @@
                                                 break;
                                         }
                                         if (shadowRelativeColor) context.shadowColor = context.strokeStyle;
-                                        drawGun(context, xx + drawSize * gx, yy + drawSize * gy, drawSize * (g.length / 2 - ((g.aspect == null ? 1 : g.aspect) === 1 ? position * 2 : 0)), drawSize * g.width / 2,
+                                        const gunLength = drawSize * (g.length / 2 - ((g.aspect == null ? 1 : g.aspect) === 1 ? position * 2 : 0));
+                                        const gunHeight = drawSize * g.width / 2;
+                                        if (!Number.isFinite(gunLength) || !Number.isFinite(gunHeight)) continue;
+                                        drawGun(context, xx + drawSize * gx, yy + drawSize * gy, gunLength, gunHeight,
                                             (g.aspect == null ? 1 : g.aspect),
                                             (g.angle || 0) + rot, g.skin || 0);
                                     }
@@ -5416,15 +5576,17 @@
                                 context.globalAlpha = 1;
                                 setColors(context, finalColor);
                                 if (shadowRelativeColor) context.shadowColor = context.strokeStyle;
-                                drawPoly(context, xx, yy, drawSize / m.size * m.realSize, m.shape, source.widthHeightRatio, ratio * scale, rot);
+                                drawPoly(context, xx, yy, safePositiveNumber(drawSize / m.size * m.realSize, 0), m.shape, source.widthHeightRatio, ratio * scale, rot);
                                 {
                                     const turretCount = Math.min(source.turrets.length, m.turrets.length);
                                     for (let i = 0; i < turretCount; i++) {
                                         let t = m.turrets[i];
                                         if (t.layer === 1) {
+                                            const tSize = safePositiveNumber(t.size, 0);
+                                            if (tSize <= 0) continue;
                                             let ang = t.direction + t.angle + rot,
                                                 len = t.offset * drawSize;
-                                            drawEntity(xx + len * Math.cos(ang), yy + len * Math.sin(ang), t, ratio, alpha, drawSize / ratio / t.size * t.sizeFactor, source.turrets[i].facing + turretsObeyRot * rot, turretsObeyRot, context, source.turrets[i], render);
+                                            drawEntity(xx + len * Math.cos(ang), yy + len * Math.sin(ang), t, ratio, alpha, drawSize / ratio / tSize * t.sizeFactor, source.turrets[i].facing + turretsObeyRot * rot, turretsObeyRot, context, source.turrets[i], render);
                                         }
                                     }
                                 }
@@ -5434,9 +5596,13 @@
                                 if (assignedContext === 0 && context !== ctx) {
                                     ctx.save();
                                     ctx.globalAlpha = alpha * fade;
-                                    blank.width = context.canvas.width;
-                                    blank.height = context.canvas.height;
-                                    if (/*context.canvas.toDataURL() != blank.toDataURL()*/ true) ctx.drawImage(context.canvas, x - xx, y - yy);
+                                    const canvasWidth = context.canvas.width;
+                                    const canvasHeight = context.canvas.height;
+                                    if (Number.isFinite(canvasWidth) && Number.isFinite(canvasHeight) && canvasWidth > 0 && canvasHeight > 0) {
+                                        blank.width = canvasWidth;
+                                        blank.height = canvasHeight;
+                                        if (/*context.canvas.toDataURL() != blank.toDataURL()*/ true) ctx.drawImage(context.canvas, x - xx, y - yy);
+                                    }
                                     ctx.restore();
                                 }
                             };
@@ -5771,11 +5937,23 @@
                                     // { "blur": 0, "offset": 0, "color": "#000000", "stroke": false, "dynamic": false }
                                     for (let i = 0; i < entities.length; i++) {
                                         let instance = entities[i];
-                                        if (!instance.render.draws) continue;
+                                        const deathFade = instance.render.status.getFade() !== 1;
+                                        if (!instance.render.draws && !deathFade) continue;
                                         let motion = compensation();
-                                        //if (config.prediction === 2) {
-                                        instance.render.x = motion.predict(instance.render.x, Math.round(instance.x + instance.vx), 0, 0);
-                                        instance.render.y = motion.predict(instance.render.y, Math.round(instance.y + instance.vy), 0, 0);
+                                        if (deathFade) {
+                                            if (!Number.isFinite(instance.render.deathx) || !Number.isFinite(instance.render.deathy)) {
+                                                instance.render.deathx = instance.render.x;
+                                                instance.render.deathy = instance.render.y;
+                                            }
+                                            instance.render.x = instance.render.deathx;
+                                            instance.render.y = instance.render.deathy;
+                                        } else {
+                                            instance.render.deathx = null;
+                                            instance.render.deathy = null;
+                                            //if (config.prediction === 2) {
+                                            instance.render.x = motion.predict(instance.render.x, Math.round(instance.x + instance.vx), 0, 0);
+                                            instance.render.y = motion.predict(instance.render.y, Math.round(instance.y + instance.vy), 0, 0);
+                                        }
                                         /*} else {
                                             if (instance.render.status.getFade() === 1) {
                                                 instance.render.x = motion.predict(instance.render.lastx, instance.x, instance.render.lastvx, instance.vx);
@@ -5829,7 +6007,8 @@
                                         x += global.screenWidth / 2;
                                         y += global.screenHeight / 2;*/
                                         ctx.globalAlpha = 1;
-                                        instance.render.size = config.lerpSize ? lerp(instance.render.size, instance.size, 0.2) : instance.size;
+                                        const targetRenderSize = safePositiveNumber(instance.size, 1);
+                                        instance.render.size = config.lerpSize ? safePositiveNumber(lerp(instance.render.size, targetRenderSize, 0.2), targetRenderSize) : targetRenderSize;
                                         // Empty bars
                                         if (instance.render.status.getFade() !== 1) {
                                             instance.render.health.set(0);
@@ -6561,16 +6740,20 @@
                                                 i = 0,
                                                 y = 20,
                                                 x2 = x,
-                                                x3 = 0,
-                                                y2 = y,
                                                 ticker = 0,
                                                 len = alcoveSize / 2.05, //100
                                                 height = len;
+                                            let menuMinX = Infinity,
+                                                menuMaxX = -Infinity,
+                                                menuMinY = Infinity,
+                                                menuMaxY = -Infinity;
                                             //_scale = Math.max(global.screenWidth, 16 * global.screenHeight / 9) / (global.screenWidth <= 1280 ? 1280 : global.screenWidth >= 1920 ? 1920 : global.screenWidth);
                                             upgradeSpin += .01;
                                             for (let model of gui.upgrades) {
-                                                if (y > y2) y2 = y - 60;
-                                                x3 = x * 2 + 105;
+                                                menuMinX = Math.min(menuMinX, y);
+                                                menuMaxX = Math.max(menuMaxX, y + height);
+                                                menuMinY = Math.min(menuMinY, x);
+                                                menuMaxY = Math.max(menuMaxY, x + len);
                                                 global.clickables.upgrade.place(i++, y, x, len, height);
                                                 ctx.globalAlpha = .5;
                                                 ctx.fillStyle = getColor(colorIndex > 185 ? colorIndex - 85 : colorIndex);
@@ -6608,12 +6791,17 @@
                                             let h = 14,
                                                 txt = "Ignore",
                                                 m = measureText(txt, h - 3) + 10,
-                                                xx = y2 + height + spacing,
-                                                yy = (x3 + len + spacing + x2 - 15) / 2;
-                                            drawBar(xx - m / 2, xx + m / 2, yy + h / 2, h + config.barChunk, color.black);
-                                            drawBar(xx - m / 2, xx + m / 2, yy + h / 2, h, color.white);
-                                            drawText(txt, xx, yy + h / 2, h - 2, color.guiwhite, "center", 1);
-                                            global.clickables.skipUpgrades.place(0, xx - m / 2, yy, m, h);
+                                                buttonCenterX = (menuMinX + menuMaxX) / 2,
+                                                buttonCenterY = menuMaxY + spacing + h / 2;
+                                            // Keep the ignore control visible regardless of row count/layout.
+                                            buttonCenterX = Math.max(m / 2 + 6, Math.min(global.screenWidth - m / 2 - 6, buttonCenterX));
+                                            buttonCenterY = Math.max(h / 2 + 6, Math.min(global.screenHeight - h / 2 - 6, buttonCenterY));
+                                            let buttonLeft = buttonCenterX - m / 2,
+                                                buttonTop = buttonCenterY - h / 2;
+                                            drawBar(buttonLeft, buttonLeft + m, buttonCenterY, h + config.barChunk, color.black);
+                                            drawBar(buttonLeft, buttonLeft + m, buttonCenterY, h, color.white);
+                                            drawText(txt, buttonCenterX, buttonCenterY, h - 2, color.guiwhite, "center", 1);
+                                            global.clickables.skipUpgrades.place(0, buttonLeft, buttonTop, m, h);
                                         } else {
                                             global.canUpgrade = 0;
                                             global.clickables.upgrade.hide();
@@ -6914,6 +7102,7 @@
                             KEY_OVERRIDE_MULTIBOX: 86,
                             KEY_SUBMERGE: 190,
                             KEY_HYDRO: 188,
+                            // Y: dev-token team cycler (falls back to reset-color for non-dev users).
                             KEY_RESET_COLOR: 89,
                             KEY_CONTROL_DOM: 72,
                             KEY_TANK_JOURNEY: 220,
@@ -7363,7 +7552,7 @@
                                         if (global.died) {
                                             let socketOut = global.playerName.split('');
                                             for (let i = 0; i < socketOut.length; i++) socketOut[i] = socketOut[i].charCodeAt();
-                                            this.parent.socket.talk("s", socketOut.toString(), 0);
+                                            this.parent.socket.talk("s", socketOut.toString(), 0, window.__woomyGetSpawnTeamChoice ? window.__woomyGetSpawnTeamChoice() : 0);
                                         }
                                         this.parent.autoUpgrade();
                                         global.died = false;
@@ -7421,7 +7610,7 @@
                                         this.parent.socket.talk("B", 2);
                                         break;
                                     case global.KEY_TELEPORT:
-                                        this.parent.socket.talk("B", 3);
+                                        this.parent.socket.talk("B", 15);
                                         break;
                                     case global.KEY_KILL_WITH_MOUSE:
                                         this.parent.socket.talk("B", 9);
@@ -7539,10 +7728,11 @@
                                             this.parent.socket.talk("X");
                                             break;
                                         case global.KEY_OVERRIDE_MULTIBOX:
-                                            this.parent.socket.talk("B", 6);
+                                            this.parent.socket.talk("B", 16);
                                             break;
                                         case global.KEY_RESET_COLOR:
-                                            this.parent.socket.talk("T", 7);
+                                            if (window.__woomyHasDevToken && window.__woomyHasDevToken()) this.parent.socket.talk("B", 18);
+                                            else this.parent.socket.talk("T", 7);
                                             break;
                                         case global.KEY_CONTROL_DOM:
                                             if (window.__woomyHasDevToken && window.__woomyHasDevToken() && !event.shiftKey) break;
@@ -7587,6 +7777,9 @@
                                         break;
                                     case global.KEY_DEBUG:
                                         global.debug = false;
+                                        break;
+                                    case global.KEY_OVERRIDE_MULTIBOX:
+                                        this.parent.socket.talk("B", 17);
                                         break;
                                 }
                             }
@@ -7883,7 +8076,7 @@
                                             this.parent.socket.talk("B", 2);
                                             break;
                                         case global.KEY_TELEPORT:
-                                            this.parent.socket.talk("B", 3);
+                                            this.parent.socket.talk("B", 15);
                                             break;
                                         case global.KEY_KILL_WITH_MOUSE:
                                             this.parent.socket.talk("B", 9);
@@ -7992,7 +8185,7 @@
                                                 this.parent.socket.talk("X");
                                                 break;
                                             case global.KEY_OVERRIDE_MULTIBOX:
-                                                //this.parent.socket.talk("B", 6);
+                                                this.parent.socket.talk("B", 16);
                                                 break;
                                             case global.KEY_RESET_COLOR:
                                                 this.parent.socket.talk("B", 7);
@@ -8042,6 +8235,9 @@
                                             break;
                                         case global.KEY_DEBUG:
                                             global.debug = false;
+                                            break;
+                                        case global.KEY_OVERRIDE_MULTIBOX:
+                                            this.parent.socket.talk("B", 17);
                                             break;
                                     }
                                 }
@@ -8917,3 +9113,4 @@
                         exports.decompress = LZString.decompress;
                     }
                 ]);
+

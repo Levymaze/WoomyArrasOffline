@@ -119,18 +119,38 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         [
           "-growth",
           "-growthboss",
+          "-growthbossv2",
+          "-growthsiegenew",
           "-growthsiege",
           "-growthseige",
           "-growthmaze",
           "-growthtdm",
+          "-growthmazetdm",
+          "-growthtesting",
         ].includes(serverPrefix) || !0 === window.__growthModePolyfill,
       growthFfaSelected =
-        "-growth" === serverPrefix || !0 === window.__growthModePolyfill;
+        "-growth" === serverPrefix || !0 === window.__growthModePolyfill,
+      growthTestingSelected =
+        "-growthtesting" === serverPrefix || !0 === c.GROWTH_TESTING;
     growthFfaSelected &&
       ((c.serverName = "Growth"),
       (c.MODE = "ffa"),
       (c.BOTS = Math.max(24, Number(c.BOTS || 0))),
       (c.GROWTH_MODE = !0));
+    growthTestingSelected &&
+      ((c.serverName = "Growth Testing"),
+      (c.MODE = "ffa"),
+      (c.BOTS = 0),
+      (c.FOOD_AMOUNT = 0),
+      (c.FOOD = Array.isArray(c.FOOD)
+        ? c.FOOD.map(() => 0)
+        : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+      (c.FOOD_NEST = Array.isArray(c.FOOD_NEST)
+        ? c.FOOD_NEST.map(() => 0)
+        : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+      (c.GROWTH_MODE = !0),
+      (c.GROWTH_TESTING = !0));
+    c.GROWTH_SIEGE_V2 && (c.BOTS = 10);
     console.log(c),
       (c.botPrefix =
         (process.env.PORT && process.env.HASH ? process.env.HASH : "x") +
@@ -155,7 +175,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           this.createMap(),
           (rankedRooms[this.id] = this);
       }
-      
+
       createMap() {
         switch ((3 * Math.random()) | 0) {
           case 0:
@@ -367,6 +387,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (this.speed = c.gameSpeed),
           (this.timeUntilRestart = c.restarts.interval),
           (this.maxBots = c.BOTS),
+          (this._worldEditObstacleCount = null),
           (this.skillBoost = e.SKILL_BOOST),
           (this.topPlayerID = -1),
           (this.arenaClosed = !1),
@@ -379,6 +400,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (this.nextTagBotTeam = []),
           (this.manualOffset = 0),
           (this.defeatedTeams = []),
+          (this.gsv2SpawningLocked = !1),
+          (this.gsv2HealerDefeatAnnounced = !1),
+          (this.gsv2CloseQueued = !1),
           (this.squadronPoints = {}),
           (this.wallCollisions = []),
           (this.cardinals = [
@@ -559,13 +583,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         } while (!this.isIn(e, i) && a > 0);
         return i;
       }
-      regenerateObstacles() {
-        entities.forEach(
-          (e) => ("wall" === e.type || "mazeWall" === e.type) && e.kill()
-        ),
-          c.MAZE.ENABLED
-            ? global.generateMaze(c.MAZE)
-            : global.placeObstacles();
+      regenerateObstacles(e = !1) {
+        entities.forEach((t) => {
+          if (-101 !== t.team) return;
+          if ("wall" === t.type || (e && "mazeWall" === t.type)) t.kill();
+        }),
+          global.placeObstacles(),
+          e && c.MAZE.ENABLED && global.generateMaze();
       }
       init() {
         c.ROOM_SETUP.length !== c.Y_GRID &&
@@ -670,7 +694,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       resize(e, t) {
         (this.width = e), (this.height = t);
         for (let e of this.cellTypes) this.findType(e);
-        this.regenerateObstacles(), sockets.broadcastRoom();
+        this.regenerateObstacles(!0), sockets.broadcastRoom();
       }
     }
     const room = new Room(c),
@@ -681,9 +705,90 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           }`),
           t = 0;
         for (let s in e)
-          e.hasOwnProperty(s) && ((e[s].index = t++), tankList.push(e[s]));
+          e.hasOwnProperty(s) &&
+            ((e[s].index = t++),
+            (e[s].__classKey = (s + "").toLowerCase()),
+            tankList.push(e[s]));
         return e;
       })();
+    const isV2HealerBulletType = (e) => {
+        if (null == e) return !1;
+        const t = Array.isArray(e) ? e[0] : e;
+        if (null == t) return !1;
+        if (Class.healBullet && t === Class.healBullet) return !0;
+        if ("string" == typeof t)
+          return "healbullet" === t.toLowerCase() || "healerbullet" === t.toLowerCase();
+        return (
+          "object" == typeof t &&
+          (!0 === t.HITS_OWN_TEAM ||
+            "vaccine" === t.HITS_OWN_TYPE ||
+            "healBullet" === t.LABEL ||
+            "Healer Bullet" === t.LABEL)
+        );
+      },
+      tuneV2HealerShootSettings = (e) => {
+        if (null == e) return;
+        if (Array.isArray(e)) {
+          let t = e.slice();
+          Number.isFinite(t[0]) && (t[0] = Math.max(t[0], 3.6)),
+            Number.isFinite(t[3]) && (t[3] = Math.max(t[3], 1.05)),
+            Number.isFinite(t[7]) && (t[7] = Math.min(t[7], 0.5)),
+            Number.isFinite(t[8]) && (t[8] = Math.min(t[8], 0.5)),
+            Number.isFinite(t[9]) && (t[9] = Math.min(t[9], 1.35));
+          return t;
+        }
+        "object" == typeof e &&
+          (Number.isFinite(e.reload) && (e.reload = Math.max(e.reload, 3.6)),
+          Number.isFinite(e.size) && (e.size = Math.max(e.size, 1.05)),
+          Number.isFinite(e.speed) && (e.speed = Math.min(e.speed, 0.5)),
+          Number.isFinite(e.maxSpeed) && (e.maxSpeed = Math.min(e.maxSpeed, 0.5)),
+          Number.isFinite(e.range) && (e.range = Math.min(e.range, 1.35)));
+      },
+      applyV2HealerGunTuning = (e, t = new Set()) => {
+        if (!e || "object" != typeof e || t.has(e)) return;
+        t.add(e);
+        if (Array.isArray(e.GUNS))
+          for (let t of e.GUNS) {
+            if (!t || !t.PROPERTIES || !isV2HealerBulletType(t.PROPERTIES.TYPE))
+              continue;
+            let e = tuneV2HealerShootSettings(t.PROPERTIES.SHOOT_SETTINGS);
+            e && (t.PROPERTIES.SHOOT_SETTINGS = e);
+          }
+        if (Array.isArray(e.TURRETS))
+          for (let s of e.TURRETS) {
+            if (!s || null == s.TYPE) continue;
+            const e = Array.isArray(s.TYPE) ? s.TYPE[0] : s.TYPE;
+            e && applyV2HealerGunTuning(e, t);
+          }
+      };
+    if (c.GROWTH_SIEGE_V2 && Class.healBullet) {
+        (Class.healBullet.HITS_OWN_TEAM = !0),
+        (Class.healBullet.HITS_OWN_TYPE = "vaccine"),
+        (Class.healBullet.LAYER = 6),
+        (Class.healBullet.VACCINE = [8, 35, !0]),
+        Class.healBullet.BODY &&
+          Number.isFinite(Class.healBullet.BODY.DAMAGE) &&
+          (Class.healBullet.BODY.DAMAGE = 0),
+        Class.healBullet.BODY &&
+          Number.isFinite(Class.healBullet.BODY.PUSHABILITY) &&
+          (Class.healBullet.BODY.PUSHABILITY = 0),
+        Class.healBullet.BODY &&
+          Number.isFinite(Class.healBullet.BODY.SPEED) &&
+          (Class.healBullet.BODY.SPEED = 1.2),
+        Class.healBullet.BODY &&
+          Number.isFinite(Class.healBullet.BODY.RANGE) &&
+          (Class.healBullet.BODY.RANGE = 40),
+        [
+          Class.sanctuaryTurret,
+          Class.destroyerDominatorAISanctuary,
+          Class.gunnerDominatorAISanctuary,
+          Class.trapperDominatorAISanctuary,
+          Class.droneDominatorAISanctuary,
+          Class.steamrollDominatorAISanctuary,
+          Class.autoDominatorAISanctuary,
+          Class.crockettDominatorAISanctuary,
+        ].forEach((e) => applyV2HealerGunTuning(e));
+    }
     getClassFromIndex = (e) => tankList[e];
     class Vector {
       constructor(e, t) {
@@ -911,6 +1016,25 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         ? 1 + ((Math.random() * room.teamAmount) | 0)
         : s[0][0];
     }
+    function getRandomActiveTeam() {
+      const e = [];
+      for (let t = 1; t <= room.teamAmount; t++)
+        room.defeatedTeams.includes(-t) || e.push(t);
+      if (!e.length) return 1 + ((Math.random() * room.teamAmount) | 0);
+      // Biased auto-team randomizer: Purple 40%, Red 30%, Green 20%, Blue 10%.
+      const t = {
+          1: 0.1,
+          2: 0.3,
+          3: 0.2,
+          4: 0.4,
+        },
+        s = e.map((e) => ({ team: e, weight: t[e] ?? 1 })),
+        i = s.reduce((e, t) => e + t.weight, 0);
+      if (!(i > 0)) return e[(Math.random() * e.length) | 0];
+      let a = Math.random() * i;
+      for (let e of s) if (((a -= e.weight), a <= 0)) return e.team;
+      return s[s.length - 1].team;
+    }
     let botTanks = (function () {
       let e = [];
 
@@ -927,28 +1051,87 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       else t(Class.basic);
       return e;
     })();
-    const spawnBot = (e = null) => {
-        let t = e,
-          s = 100;
-        if (!e)
-          do {
-            t = room.randomType("norm");
-          } while (dirtyCheck(t, 400) && s-- > 0);
-        let i = new Entity(t);
-        if (((i.color = 12), "tdm" === room.gameMode)) {
-          let e = room.nextTagBotTeam.shift() || getTeam(0);
-          (i.team = -e),
-            (i.color = [10, 12, 11, 15, 3, 35, 36, 0][e - 1]),
-            room[`spn${e}`] &&
-              room[`spn${e}`].length &&
-              "Carrier Battle" === c.serverName &&
-              ((t = room.randomType(`spn${e}`)), (i.x = t.x), (i.y = t.y));
+    const getGrowthSiegeV2AliveHealerDominatorCount = () =>
+        entities.filter(
+          (e) =>
+            e &&
+            e.isDominator &&
+            e.isHealerDominator &&
+            !e.isGhost &&
+            e.health &&
+            e.health.amount > 0
+        ).length,
+      getGrowthSiegeV2LivingDefenderCount = () =>
+        entities.filter(
+          (e) =>
+            e &&
+            (e.isPlayer || e.isBot) &&
+            "tank" === e.type &&
+            !e.isGhost &&
+            e.health &&
+            e.health.amount > 0
+        ).length,
+      evaluateGrowthSiegeV2DefeatState = () => {
+        if (!c.GROWTH_SIEGE_V2 || room.arenaClosed) return;
+        let e = getGrowthSiegeV2AliveHealerDominatorCount();
+        if (e > 0) {
+          (room.gsv2SpawningLocked = !1),
+            (room.gsv2HealerDefeatAnnounced = !1),
+            (room.gsv2CloseQueued = !1);
+          return;
         }
-        let a = ran.choose(botTanks),
-          o = a.IS_SMASHER || a.IS_LANCER ? "bot2" : "bot",
-          r = a.IS_SMASHER
+        room.gsv2SpawningLocked = !0;
+        room.gsv2HealerDefeatAnnounced ||
+          ((room.gsv2HealerDefeatAnnounced = !0),
+          sockets.broadcast(
+            "All Healer Dominators have fallen! No new players or bots can spawn.",
+            "#FF5A5A"
+          ));
+        if (room.gsv2CloseQueued) return;
+        getGrowthSiegeV2LivingDefenderCount() <= 0 &&
+          ((room.gsv2CloseQueued = !0),
+          sockets.broadcast(
+            "All defenders have fallen! Arena Closers are entering the arena.",
+            "#FF0000"
+          ),
+          setTimeout(() => {
+            room.arenaClosed || closeArena();
+          }, 1500));
+      };
+    const spawnBot = (e = null) => {
+        if (c.GROWTH_SIEGE_V2) {
+          if ((evaluateGrowthSiegeV2DefeatState(), room.gsv2SpawningLocked))
+            return;
+        }
+        let t = e,
+          s = 100,
+          i = null;
+        if ("tdm" === room.gameMode) i = Number(room.nextTagBotTeam.shift() || getTeam(0));
+        if (!e)
+          if ("tdm" === room.gameMode && Number.isFinite(i)) {
+            const e = ["spn", "bas", "n_b", "bad"]
+              .map((e) => `${e}${i}`)
+              .filter((e) => room[e] && room[e].length);
+            if (e.length)
+              do {
+                t = room.randomType(ran.choose(e));
+              } while (dirtyCheck(t, 120) && s-- > 0);
+            else
+              do {
+                t = room.randomType("norm");
+              } while (dirtyCheck(t, 400) && s-- > 0);
+          } else
+            do {
+              t = room.randomType("norm");
+            } while (dirtyCheck(t, 400) && s-- > 0);
+        let a = new Entity(t);
+        if (((a.color = 12), "tdm" === room.gameMode && Number.isFinite(i)))
+          (a.team = -i), (a.color = [10, 12, 11, 15, 3, 35, 36, 0][i - 1]);
+        let o = ran.choose(botTanks),
+          r = o.IS_SMASHER || o.IS_LANCER ? "bot2" : "bot",
+          n = o.IS_SMASHER
             ? [12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
-            : a.IS_LANCER
+            : o.IS_LANCER
             ? [0, 6, 9, 9, 0, 3, 5, 7, 3, 5]
             : ran.choose([
                 [9, 9, 9, 9, 9, 0, 0, 0, 0, 0],
@@ -957,35 +1140,39 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 [6, 7, 7, 7, 6, 3, 2, 2, 3, 3],
                 [9, 7, 7, 7, 6, 0, 0, 0, 0, 9],
               ]);
-        (i.isBot = !0),
-          i.define(Class[o]),
-          (i.tank = a),
-          i.define(a),
-          (i.name = ran.chooseBotName()),
-          (i.nameColor = i.name.includes("Bee")
+        (a.isBot = !0),
+          a.define(Class[r]),
+          (a.tank = o),
+          a.define(o),
+          (a.name = ran.chooseBotName()),
+          (a.nameColor = a.name.includes("Bee")
             ? "#FFF782"
-            : i.name.includes("Honey Bee")
+            : a.name.includes("Honey Bee")
             ? "#FCCF3B"
-            : i.name.includes("Fallen")
+            : a.name.includes("Fallen")
             ? "#CCCCCC"
             : "#FFFFFF") /* BOT TAG ORIGINAL COLOR: #c1caff */,
-          (i.autoOverride = !0),
-          (i.invuln = !0),
-          (i.skill.score = 59212),
+          (a.autoOverride = !0),
+          (a.invuln = !0),
+          (a.skill.score = 59212),
           setTimeout(() => {
-            (i.invuln = !1),
-              (i.autoOverride = !1),
+            (a.invuln = !1),
+              (a.autoOverride = !1),
               "Carrier Battle" === c.serverName &&
-                (i.controllers = [
-                  new ioTypes.carrierThinking(i),
-                  new ioTypes.carrierAI(i),
+                (a.controllers = [
+                  new ioTypes.carrierThinking(a),
+                  new ioTypes.carrierAI(a),
                 ]),
-              i.skill.maintain(),
-              i.refreshBodyAttributes(),
-              i.skill.set(r),
-              i.controllers.push(new ioTypes.roamWhenIdle(i));
+              a.skill.maintain(),
+              a.refreshBodyAttributes(),
+              a.skill.set(n),
+              a.controllers.push(new ioTypes.roamWhenIdle(a)),
+              c.GROWTH_SIEGE_V2 &&
+                a.controllers.push(
+                  new ioTypes.seekHealerDominatorWhenLowHealth(a)
+                );
           }, 7500),
-          room.maxBots > 0 && bots.push(i);
+          room.maxBots > 0 && bots.push(a);
       },
       closeArena = () => {
         c.serverName.includes("Boss") && (room.bossRushOver = !0),
@@ -1143,6 +1330,75 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (i.passive = !0),
           setTimeout(() => i.kill(), e);
       },
+      spawnGrowthSiegeV2Divider = () => {
+        if (!c.GROWTH_SIEGE_V2) return;
+        let e = room.gsv2line && room.gsv2line.length ? room.gsv2line : [];
+        const t = room.width / room.xgrid;
+        if (e.length && room.spn2 && room.spn2.length) {
+          const s =
+              e.reduce((e, t) => e + t.x, 0) / Math.max(1, e.length),
+            i =
+              room.spn2.reduce((e, t) => e + t.x, 0) /
+              Math.max(1, room.spn2.length),
+            a = util.clamp(i < s ? -1 : 1, -1, 1);
+          // Shrink the boss side by nudging the divider one cell toward the boss spawn side.
+          e = e.map((e) => ({
+            x: util.clamp(e.x + a * t, 0.5 * t, room.width - 0.5 * t),
+            y: e.y,
+          }));
+        }
+        if (!e.length) {
+          const t = room.width * 0.24,
+            s = room.height / room.ygrid;
+          e = Array.from({ length: room.ygrid }, (e, i) => ({
+            x: t,
+            y: (i + 0.5) * s,
+          }));
+        }
+        for (let t of e) {
+          const e = new Entity(t);
+          e.define(Class.mazeObstacle),
+            (e.team = -101),
+            (e.SIZE = room.width / room.xgrid / 2),
+            (e.width = 0.9),
+            (e.height = 1.35),
+            (e.color = 12),
+            (e.alpha = 0.55),
+            (e.alwaysActive = !0),
+            (e.isGrowthSiegeDivider = !0),
+            (e.settings.canGoOutsideRoom = !0),
+            e.protect(),
+            e.life();
+        }
+      },
+      spawnGrowthSiegeV2PerimeterWalls = () => {
+        if (!c.GROWTH_SIEGE_V2) return;
+        const e = room.width / room.xgrid,
+          t = room.height / room.ygrid,
+          s = new Set(),
+          i = (i, a) => {
+            const o = `${i},${a}`;
+            if (s.has(o)) return;
+            s.add(o);
+            const r = new Entity({
+              x: (i + 0.5) * e,
+              y: (a + 0.5) * t,
+            });
+            r.define(Class.mazeObstacle),
+              (r.team = -101),
+              (r.SIZE = e / 2),
+              (r.width = 1.2),
+              (r.height = 1.2),
+              (r.color = 17),
+              (r.alpha = 0.95),
+              (r.alwaysActive = !0),
+              (r.settings.canGoOutsideRoom = !0),
+              r.protect(),
+              r.life();
+          };
+        for (let t = 0; t < room.xgrid; t++) i(t, 0), i(t, room.ygrid - 1);
+        for (let e = 0; e < room.ygrid; e++) i(0, e), i(room.xgrid - 1, e);
+      },
       dominatorLoop = () => {
         let e = [
             Class.destroyerDominatorAI,
@@ -1154,18 +1410,23 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           ],
           t = {};
         for (let s of room.domi) {
-          let i = e[ran.chooseChance(35, 35, 10, 8, 10, 10)],
-            a = new Entity(s);
+          let i = c.GROWTH_SIEGE_V2
+              ? Class.destroyerDominatorAISanctuary
+              : e[ran.chooseChance(35, 35, 10, 8, 10, 10)],
+            a = new Entity(s),
+            o = c.GROWTH_SIEGE_V2 ? -1 : -100;
           a.define(i),
             (a.isDominator = !0),
+            (a.isHealerDominator = !!c.GROWTH_SIEGE_V2),
             (a.alwaysActive = !0),
-            (a.team = -100),
+            (a.team = o),
             (a.SIZE = 70),
-            (a.color = 13),
+            (a.color = -1 === o ? 10 : 13),
             (a.settings.hitsOwnType = "pushOnlyTeam"),
             (a.miscIdentifier = "appearOnMinimap"),
             (a.FOV = 0.5),
             (a.onDead = () => {
+              c.GROWTH_SIEGE_V2 && room.setType("domi", s);
               let e = [];
               for (let t of a.collisionArray)
                 t.team >= -room.teamAmount && t.team <= -1 && e.push(t.team);
@@ -1216,6 +1477,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 room.setType(`dom${-o || "i"}`, s),
                 r.define(i),
                 (r.isDominator = !0),
+                (r.isHealerDominator = !!c.GROWTH_SIEGE_V2),
                 (r.alwaysActive = !0),
                 (r.team = o || -100),
                 (r.SIZE = 70),
@@ -1242,9 +1504,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       l + " has won the game! Closing arena..."
                     ),
                   setTimeout(() => closeArena(), 5e3));
+              c.GROWTH_SIEGE_V2 && evaluateGrowthSiegeV2DefeatState();
             }),
-            (t[s.id] = -100);
+            c.GROWTH_SIEGE_V2 && room.setType("dom1", s),
+            (t[s.id] = o);
         }
+        c.GROWTH_SIEGE_V2 && evaluateGrowthSiegeV2DefeatState();
       },
       mothershipLoop = (e, t) => {
         let s = new Entity(e),
@@ -1413,6 +1678,61 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       Class.snowflakeAI,
       Class.greenGuardianAI,
     ].filter((e) => null != e);
+    const shapeTypeCache = new WeakMap(),
+      resolveShapeType = (def, seen = new Set()) => {
+        if (!def || "object" != typeof def) return null;
+        if (shapeTypeCache.has(def)) return shapeTypeCache.get(def);
+        if (seen.has(def)) return null;
+        seen.add(def);
+        let s = null;
+        if ("string" == typeof def.TYPE) {
+          const type = def.TYPE.toLowerCase();
+          ("food" !== type && "crasher" !== type) || (s = type);
+        }
+        if (!s && Array.isArray(def.PARENT))
+          for (let parent of def.PARENT) {
+            let parentType = resolveShapeType(parent, seen);
+            if (parentType) {
+              s = parentType;
+              break;
+            }
+          }
+        return seen.delete(def), shapeTypeCache.set(def, s), s;
+      },
+      spawnableShapeMap = (() => {
+        const e = new Map();
+        for (let [t, s] of Object.entries(Class)) {
+          if (!resolveShapeType(s)) continue;
+          e.set((t + "").toLowerCase(), s);
+        }
+        return e;
+      })();
+    const getGrowthSiegeV2BossSpawnPoint = () => {
+      const e = room.spn2 && room.spn2.length ? room.spn2 : [];
+      if (!e.length) return room.randomType("spn2");
+      let t = e[0].x,
+        s = e[0].x;
+      for (let i of e) i.x < t && (t = i.x), i.x > s && (s = i.x);
+      let i = null,
+        a = -1 / 0;
+      for (let o = 0; o < 6; o++) {
+        let o = ran.choose(e),
+          r = s > t ? (o.x - t) / (s - t) : 1,
+          n = Math.random() + 1.8 * r;
+        n > a && ((a = n), (i = o));
+      }
+      if (!i) i = ran.choose(e);
+      const o = room.width / room.xgrid,
+        r = room.height / room.ygrid;
+      return {
+        x: util.clamp(i.x + 0.28 * o, 0.5 * o, room.width - 0.5 * o),
+        y: util.clamp(
+          i.y + ran.randomRange(-0.18, 0.18) * r,
+          0.5 * r,
+          room.height - 0.5 * r
+        ),
+      };
+    };
     const bossRushLoop = () => {
         room.bossRushWave++,
           sockets.broadcast(`Warning, wave ${room.bossRushWave} has started.`),
@@ -1420,7 +1740,14 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         let e = 0,
           t = 50 === room.bossRushWave ? 1 : Math.round(5 * Math.random() + 5);
         for (let s = 0; s < t; s++) {
-          const t = new Entity(room.random());
+          let i = room.random();
+          if (c.GROWTH_SIEGE_V2) {
+            let e = 100;
+            do {
+              i = getGrowthSiegeV2BossSpawnPoint();
+            } while (dirtyCheck(i, 250) && e-- > 0);
+          }
+          const t = new Entity(i);
           (t.team = -100),
             50 === room.bossRushWave
               ? t.define(ran.choose([Class.gaea, Class.eggBossTier5AI]))
@@ -1793,14 +2120,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               !this.body.controllingSquadron &&
               !this.body.isInMyBase()
             ) {
-              let t =
-                  o.offset * Math.cos(o.direction + o.angle + o.body.facing) +
-                  (1.5 * o.length - (o.width * o.settings.size) / 2) *
-                    Math.cos(o.angle + o.body.facing),
-                r =
-                  o.offset * Math.sin(o.direction + o.angle + o.body.facing) +
-                  (1.5 * o.length - (o.width * o.settings.size) / 2) *
-                    Math.sin(o.angle + o.body.facing),
+              let l = getGunMuzzlePosition(o, 1.5),
+                t = l.x,
+                r = l.y,
                 n = [];
               for (let e = 0; e < o.countsOwnKids; e++)
                 n.push(o.fire(t, r, o.body.skill, !0));
@@ -2085,14 +2407,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               !this.body.controllingSquadron
             ) {
               t.coolDown.time = Date.now();
-              let e =
-                  t.offset * Math.cos(t.direction + t.angle + t.body.facing) +
-                  (1.35 * t.length - (t.width * t.settings.size) / 2) *
-                    Math.cos(t.angle + t.body.facing),
-                s =
-                  t.offset * Math.sin(t.direction + t.angle + t.body.facing) +
-                  (1.35 * t.length - (t.width * t.settings.size) / 2) *
-                    Math.sin(t.angle + t.body.facing),
+              let a = getGunMuzzlePosition(t, 1.35),
+                e = a.x,
+                s = a.y,
                 i = [];
               for (let a = 0; a < t.countsOwnKids; a++)
                 i.push(t.fire(e, s, t.body.skill, !0));
@@ -2726,6 +3043,57 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           };
         }
       }),
+      (ioTypes.seekHealerDominatorWhenLowHealth = class extends IO {
+        constructor(e) {
+          super(e), (this.isRetreating = !1);
+        }
+        think() {
+          if (
+            !c.GROWTH_SIEGE_V2 ||
+            !this.body.isBot ||
+            "tank" !== this.body.type ||
+            this.body.isDominator ||
+            this.body.isGhost ||
+            !this.body.health ||
+            !Number.isFinite(this.body.health.max) ||
+            this.body.health.max <= 0
+          )
+            return {};
+          const e = this.body.health.amount / this.body.health.max;
+          this.isRetreating
+            ? e >= 0.82 && (this.isRetreating = !1)
+            : e < 0.5 && (this.isRetreating = !0);
+          if (!this.isRetreating) return {};
+          const t = entities.filter(
+              (e) =>
+                e &&
+                e.isDominator &&
+                !e.isGhost &&
+                e.health &&
+                e.health.amount > 0 &&
+                e.team === this.body.team
+            ),
+            s = nearest(t, this.body);
+          if (!s) return {};
+          const i = util.getDistance(this.body, s),
+            a = Math.max(150, 1.4 * s.size + 3 * this.body.size);
+          return i > a
+            ? {
+                goal: {
+                  x: s.x,
+                  y: s.y,
+                },
+                power: 1,
+              }
+            : {
+                goal: {
+                  x: this.body.x,
+                  y: this.body.y,
+                },
+                power: 0.15,
+              };
+        }
+      }),
       (ioTypes.minion = class extends IO {
         constructor(e) {
           super(e),
@@ -2737,21 +3105,38 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           if (null != e.target && (e.alt || e.main)) {
             let t,
               s = Math.sqrt(this.body.master.size / this.body.master.SIZE),
-              i = 60 * s,
+              c =
+                this.body.master &&
+                Number.isFinite(this.body.master.SIZE) &&
+                this.body.master.SIZE > 0 &&
+                Number.isFinite(this.body.master.coreSize) &&
+                this.body.master.coreSize > 0
+                  ? Math.max(1, this.body.master.SIZE / this.body.master.coreSize)
+                  : 1,
+              d = Math.min(3.2, Math.pow(c, 1.2)),
+              u =
+                this.body.master &&
+                Array.isArray(this.body.master.children) &&
+                this.body.master.children.length > 1
+                  ? 1 + 0.2 * Math.sqrt(this.body.master.children.length)
+                  : 1,
+              y = d * u,
+              p = Math.min(2, Math.pow(y, 0.7)),
+              i = 60 * s * p,
               a = 120 * s,
-              o = 135 * s,
+              o = 135 * s * p,
               r = 1,
               n = new Vector(e.target.x, e.target.y);
             if (e.alt) {
-              let l = 120 * s,
-                h = 90 * s,
-                u = !1;
+              let l = 120 * s * y,
+                h = 90 * s * p,
+                g = !1;
               if (this.lastAltTarget) {
                 let e = n.x - this.lastAltTarget.x,
                   t = n.y - this.lastAltTarget.y;
-                u = e * e + t * t > h * h;
+                g = e * e + t * t > h * h;
               }
-              u && (this.altStickLock = !1),
+              g && (this.altStickLock = !1),
                 !this.altStickLock && n.length < l && (this.altStickLock = !0);
               if (this.altStickLock || n.length < i)
                 t = {
@@ -2929,6 +3314,25 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         }
         think(e) {
           this.a -= 0.025;
+          let t = 0;
+          return (
+            null != this.body.bond && (t = this.body.bound.angle),
+            {
+              target: {
+                x: Math.cos(this.a + t),
+                y: Math.sin(this.a + t),
+              },
+              main: !0,
+            }
+          );
+        }
+      }),
+      (ioTypes.slowSpinReverseDominator = class extends IO {
+        constructor(e) {
+          super(e), (this.a = 0);
+        }
+        think(e) {
+          this.a -= 0.00950;
           let t = 0;
           return (
             null != this.body.bond && (t = this.body.bound.angle),
@@ -3498,6 +3902,347 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         );
       return e;
     })();
+    const barrelScaleExclusionLabels = [
+      "wrench",
+      "crowbar",
+      "spanner",
+      "mega spawner",
+      "top banana",
+      "ultra spawner",
+    ];
+    const getEntityRoot = (e) => {
+      let t = e,
+        s = 0;
+      for (; t && t.master && t.master !== t && s++ < 24; ) t = t.master;
+      return t || e;
+    };
+    const deathScoreBonusConfig = {
+      maxBonus: 400000,
+      scoreForMaxBonus: 1600000,
+    };
+    const calculateDeathScoreBonus = (e) => {
+      let t = Math.max(0, Number(e) || 0);
+      if (!Number.isFinite(t) || t <= 0) return 0;
+      let s = deathScoreBonusConfig.maxBonus / deathScoreBonusConfig.scoreForMaxBonus;
+      return Math.min(deathScoreBonusConfig.maxBonus, Math.round(t * s));
+    };
+    const projectileDeathFadeTypes = new Set([
+      "bullet",
+      "drone",
+      "minion",
+      "trap",
+      "swarm",
+      "satellite",
+    ]);
+    const isProjectileDeathFadeEntity = (e) =>
+      !!e &&
+      projectileDeathFadeTypes.has(e.type) &&
+      e.settings &&
+      e.settings.drawShape !== !1;
+    const isBarrelScaleExcluded = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return barrelScaleExclusionLabels.some((e) => t.includes(e));
+    };
+    const highTierBuilderLineLabels = [
+      "constructor",
+      "constructor-3",
+      "constructionist",
+      "manufacturer",
+      "decalibrator",
+      "dicalibrator",
+      "retributor",
+      "redistributor",
+      "bloodhound",
+    ];
+    const isHighTierBuilderLineClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return highTierBuilderLineLabels.some((e) => t.includes(e));
+    };
+    const isDestroyerLineClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return /destroyer|obliterator/.test(t);
+    };
+    const isAnnihilatorLineClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return /annihilator|\banni\b|flattener|decentral|retributor|redistributor/.test(
+        t
+      );
+    };
+    const isConquerorOrRetributorBranchClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return /conqueror|decentral|retributor|redistributor/.test(t);
+    };
+    const isDestroyerOrAnnihilatorBarrelLabel = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return /destroyer|obliterator|annihilator|\banni\b/.test(t);
+    };
+    const isBiggerCheeseClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return t.includes("overload") || t.includes("bigger cheese");
+    };
+    const isDestroyerBarrelLabel = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return t.includes("destroyer");
+    };
+    const destroyerLineReloadReductionSeconds = 0.8;
+    const overloadReloadReductionSeconds = 1.3;
+    const reloadUnitsPerSecond = 30;
+    const minGunReloadUnits = 0.1;
+    const definitionHasClassKey = (e, t, s = new Set()) => {
+      if (!e || "object" != typeof e || s.has(e)) return !1;
+      s.add(e);
+      let i = ((e.__classKey || "") + "").toLowerCase().trim();
+      if (i && t.test(i)) return !0;
+      if (!Array.isArray(e.PARENT) || !e.PARENT.length) return !1;
+      for (let i of e.PARENT) if (definitionHasClassKey(i, t, s)) return !0;
+      return !1;
+    };
+    const getDefinitionByEntityIndex = (e) => {
+      if (!Number.isFinite(e)) return null;
+      let t = [e];
+      Number.isFinite(room.manualOffset) &&
+        room.manualOffset &&
+        (t.push(e - room.manualOffset), t.push(e + room.manualOffset));
+      for (let e of t) {
+        let t = getClassFromIndex(e);
+        if (t) return t;
+      }
+      return null;
+    };
+    const entityHasClassKey = (e, t) => {
+      if (!e || !Number.isFinite(e.index)) return !1;
+      let s = getDefinitionByEntityIndex(e.index);
+      return !!s && definitionHasClassKey(s, t);
+    };
+    const destroyerClassKeyPattern = /destroyer|obliterator|annihilator|anni/;
+    const retributorClassKeyPattern = /retributor|redistributor|conqueror|decentral/;
+    const directorClassKeyPattern = /director/;
+    const overloadClassKeyPattern = /overload/;
+    const gunLooksLikeDestroyerBarrel = (e) => {
+      if (!e || !e.settings) return !1;
+      return (
+        Number.isFinite(e.settings.reload) &&
+        e.settings.reload >= 80 &&
+        Number.isFinite(e.settings.recoil) &&
+        e.settings.recoil >= 2
+      );
+    };
+    const getDestroyerLineReloadReduction = (e, t = "", s = null) => {
+      if (!e) return 0;
+      let i = getEntityRoot(e);
+      if (!i || "tank" !== i.type) return 0;
+      let a = ((i.label || "") + "").toLowerCase().trim(),
+        o = ((e.label || "") + "").toLowerCase().trim(),
+        r = ((t || "") + "").toLowerCase().trim(),
+        n = entityHasClassKey(i, destroyerClassKeyPattern),
+        l = entityHasClassKey(e, destroyerClassKeyPattern),
+        h = entityHasClassKey(i, retributorClassKeyPattern),
+        d = gunLooksLikeDestroyerBarrel(s);
+      return isDestroyerLineClass(a) ||
+        isAnnihilatorLineClass(a) ||
+        isDestroyerLineClass(o) ||
+        isAnnihilatorLineClass(o) ||
+        n ||
+        l ||
+        isDestroyerOrAnnihilatorBarrelLabel(o) ||
+        isDestroyerOrAnnihilatorBarrelLabel(r) ||
+        (isConquerorOrRetributorBranchClass(a) && isDestroyerBarrelLabel(t)) ||
+        (h &&
+          (isDestroyerBarrelLabel(t) ||
+            isDestroyerOrAnnihilatorBarrelLabel(o) ||
+            l ||
+            d))
+        ? destroyerLineReloadReductionSeconds * reloadUnitsPerSecond
+        : 0;
+    };
+    const getBiggerCheeseReloadReduction = (e, t = "", s = null) => {
+      if (!e) return 0;
+      let i = getEntityRoot(e);
+      if (!i || "tank" !== i.type) return 0;
+      let a = ((i.label || "") + "").toLowerCase().trim(),
+        o = ((e.label || "") + "").toLowerCase().trim(),
+        r = ((t || "") + "").toLowerCase().trim(),
+        n = entityHasClassKey(i, overloadClassKeyPattern),
+        l = entityHasClassKey(e, overloadClassKeyPattern),
+        h = entityHasClassKey(i, directorClassKeyPattern),
+        d = gunLooksLikeDestroyerBarrel(s);
+      return (
+        isBiggerCheeseClass(a) ||
+        isBiggerCheeseClass(o) ||
+        isBiggerCheeseClass(r) ||
+        n ||
+        l ||
+        (h && d)
+      )
+        ? overloadReloadReductionSeconds * reloadUnitsPerSecond
+        : 0;
+    };
+    const getGunReloadReduction = (e, t = "", s = null) =>
+      Math.max(
+        getDestroyerLineReloadReduction(e, t, s),
+        getBiggerCheeseReloadReduction(e, t, s)
+      );
+    const isMegaTrapperLineClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return /mega trapper|giga trapper|tera trapper|tatter|hammerer|plaguer|swarming mega|swarming hammerer|tri-mega trapper|mega arsenal|giga arsenal|logger|screwdriver|recorder|vicaria|crustacean|clogger|mega trap/.test(
+        t
+      );
+    };
+    const isTeraTrapperClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return t.includes("tera trapper") || t.includes("terra trapper");
+    };
+    const isFlattenerClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return t.includes("flattener");
+    };
+    const isDominatorOrBossEntity = (e) => {
+      let t = getEntityRoot(e);
+      if (!t) return !1;
+      if (t.isDominator || t.isMothership) return !0;
+      let s = ((t.type || "") + "").toLowerCase().trim();
+      if ("miniboss" === s) return !0;
+      if (Number.isFinite(t.bossTierType) && t.bossTierType >= 0) return !0;
+      let i = ((t.label || "") + "").toLowerCase().trim();
+      return i.includes("dominator");
+    };
+    // Per-tank custom barrel range knobs (do not affect any other classes).
+    const teraTrapperBarrelReach = { mult: 4, backoff: 0.08 };
+    const flattenerBarrelReach = { mult: 1.7, backoff: 0.34 };
+    const wrenchSpannerAutoTurretMuzzleMult = 100;
+    const getBarrelReachTier = (e, t = null) =>
+      t && isDominatorOrBossEntity(t)
+        ? 0
+        : isAnnihilatorLineClass(e)
+        ? 2
+        : isDestroyerLineClass(e)
+        ? 1
+        : 0;
+    const isGrowthBarrelRangeAllowedClass = (e) => {
+      let t = (e || "").toLowerCase().trim();
+      return (
+        t.includes("builder") ||
+        isHighTierBuilderLineClass(t) ||
+        getBarrelReachTier(t) > 0 ||
+        t.includes("mega trapper") ||
+        t.includes("giga trapper") ||
+        t.includes("tera trapper") ||
+        t.includes("tatter")
+      );
+    };
+    const definitionInheritsType = (e, t, s = new Set()) => {
+      if (!e || s.has(e)) return !1;
+      if (e.TYPE === t) return !0;
+      s.add(e);
+      if (!Array.isArray(e.PARENT) || !e.PARENT.length) return !1;
+      for (let i of e.PARENT) if (definitionInheritsType(i, t, s)) return !0;
+      return !1;
+    };
+    const gunShootsTrapLikeProjectile = (e) => {
+      if (!e || !Array.isArray(e.bulletTypes) || !e.bulletTypes.length) return !1;
+      if (8 === e.calculator || "trap" === e.calculator) return !0;
+      return e.bulletTypes.some(
+        (e) =>
+          definitionInheritsType(e, "trap") ||
+          ("string" == typeof e.TYPE && e.TYPE.toLowerCase().includes("trap")) ||
+          ("string" == typeof e.LABEL &&
+            /(trap|block|boomerang|mine|pillbox)/i.test(e.LABEL))
+      );
+    };
+    const getEntitySizeGrowthScale = (e) => {
+      if (!e) return 1;
+      let t = e.coreSize || e.SIZE || e.size;
+      if (!Number.isFinite(t) || t <= 0 || !Number.isFinite(e.size) || e.size <= 0) return 1;
+      return Math.max(1, e.size / t);
+    };
+    const getMegaTrapperGrowthRangeMult = (e) => {
+      if (!e || !e.growthData || !e.growthData.isGrowthApplied) return 1;
+      let t = getEntityRoot(e),
+        s = ((t && t.label) || e.label || "").toLowerCase().trim();
+      if (!isMegaTrapperLineClass(s)) return 1;
+      let i = getEntitySizeGrowthScale(e);
+      if (!Number.isFinite(i) || i <= 1) return 1;
+      // Growth-based trap range gain for mega trapper line only.
+      let a = 1 + 0.85 * (i - 1);
+      return Math.min(2.4, Math.max(1, a));
+    };
+    const getGunClassLabel = (e) => {
+      if (!e || !e.body) return "";
+      let t = getEntityRoot(e.body);
+      return ((t && t.label) || (e.body && e.body.label) || "").toLowerCase().trim();
+    };
+    const isWrenchSpannerAutoTurretGun = (e) => {
+      if (!e || !e.body) return !1;
+      let t = getEntityRoot(e.body),
+        s = ((t && t.label) || "").toLowerCase().trim(),
+        i = ((e.body.label || "") + "").toLowerCase().trim();
+      if ("wrench" !== s && "spanner" !== s) return !1;
+      if (i.length) return !1;
+      return (
+        Array.isArray(e.body.controllers) &&
+        e.body.controllers.includes("nearestDifferentMaster")
+      );
+    };
+    const growthBarrelDistanceScale = 0;
+    const getGunBarrelLengthScale = (e) => {
+      if (!e || !e.body) return 1;
+      let t = getEntityRoot(e.body),
+        s = getGunClassLabel(e),
+        i = gunShootsTrapLikeProjectile(e),
+        a = getBarrelReachTier(s, t);
+      if (isBarrelScaleExcluded(s)) return 1;
+      if (a <= 0 && (!isGrowthBarrelRangeAllowedClass(s) || !i))
+        return 1;
+      let o =
+        (e.body.growthData && e.body.growthData.barrelScale) ||
+        (t && t.growthData && t.growthData.barrelScale);
+      if (!Number.isFinite(o) || o <= 1) o = getEntitySizeGrowthScale(e.body);
+      if (!Number.isFinite(o) || o <= 1) return 1;
+      // Destroyer line gets extra reach, and Annihilator line gets the strongest variant.
+      let r = 1.05,
+        n = 3;
+      isHighTierBuilderLineClass(s) && ((r = 1.35), (n = 3.4)),
+        1 === a ? ((r = 0.22), (n = 1.45)) : 2 === a && ((r = 0.32), (n = 1.65));
+      if (growthBarrelDistanceScale <= 0) return 1;
+      let l = 1 + r * growthBarrelDistanceScale * (o - 1);
+      return Math.min(n, Math.max(1, l));
+    };
+    const getGunMuzzlePosition = (e, t = 1.35) => {
+      let a = getGunClassLabel(e),
+        o = isHighTierBuilderLineClass(a),
+        l = isMegaTrapperLineClass(a),
+        r = getBarrelReachTier(a, e && e.body ? e.body : null),
+        n = gunShootsTrapLikeProjectile(e);
+      let h = isWrenchSpannerAutoTurretGun(e)
+          ? wrenchSpannerAutoTurretMuzzleMult
+          : t,
+        s = getGunBarrelLengthScale(e),
+        i = n
+          ? isTeraTrapperClass(a)
+            ? teraTrapperBarrelReach.mult * h * e.length * s -
+              teraTrapperBarrelReach.backoff * e.width * e.settings.size
+            : o
+            ? 2 * h * e.length * s - 0.04 * e.width * e.settings.size
+            : l
+            ? 2* h * e.length * s - 0.08 * e.width * e.settings.size
+            : h * e.length * s - 0.15 * e.width * e.settings.size
+          : isFlattenerClass(a)
+          ? flattenerBarrelReach.mult * h * e.length * s -
+            flattenerBarrelReach.backoff * e.width * e.settings.size
+          : 2 === r
+          ? 1.1 * h * e.length * s - 0.34 * e.width * e.settings.size
+          : 1.45 === r
+          ? 1.2 * h * e.length * s - 0.4 * e.width * e.settings.size
+          : h * e.length * s - (e.width * e.settings.size) / 2;
+      return {
+        x:
+          e.offset * Math.cos(e.direction + e.angle + e.body.facing) +
+          i * Math.cos(e.angle + e.body.facing),
+        y:
+          e.offset * Math.sin(e.direction + e.angle + e.body.facing) +
+          i * Math.sin(e.angle + e.body.facing),
+      };
+    };
     class Gun {
       constructor(e, t) {
         (this.lastShot = {
@@ -3584,17 +4329,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 for (let t = 0; t < e.body.guns.length; t++) {
                   let s = e.body.guns[t];
                   if (s.shootOnDeath) {
-                    let t =
-                        s.offset *
-                          Math.cos(s.direction + s.angle + s.body.facing) +
-                        (1.35 * s.length - (s.width * s.settings.size) / 2) *
-                          Math.cos(s.angle + e.body.facing),
-                      i =
-                        s.offset *
-                          Math.sin(s.direction + s.angle + s.body.facing) +
-                        (1.35 * s.length - (s.width * s.settings.size) / 2) *
-                          Math.sin(s.angle + e.body.facing);
-                    s.fire(t, i, e.body.skill);
+                    let t = getGunMuzzlePosition(s, 1.35);
+                    s.fire(t.x, t.y, e.body.skill);
                   }
                 }
               }),
@@ -3663,6 +4399,11 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 this.body.maxChildren >
                   this.body.children.length *
                     (7 === this.calculator ? e.rld : 1);
+          let s = this.settings.reload,
+            i = getGunReloadReduction(this.body, this.label, this);
+          i > 0 &&
+            Number.isFinite(s) &&
+            (s = Math.max(minGunReloadUnits, s - i));
           if (
             (this.destroyOldestChild && (t || (t = !0), this.destroyOldest()),
             this.body.master.invuln && (t = !1),
@@ -3670,7 +4411,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               this.cycle < 1 &&
               (this.cycle +=
                 1 /
-                this.settings.reload /
+                s /
                 room.speed /
                 (7 === this.calculator || 4 === this.calculator ? 1 : e.rld)),
             t &&
@@ -3688,16 +4429,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     (this.body.master.displayText =
                       this.body.master.ammo + " Ammo left"))
                   : (t = !1));
-              let s =
-                  this.offset *
-                    Math.cos(this.direction + this.angle + this.body.facing) +
-                  (1.35 * this.length - (this.width * this.settings.size) / 2) *
-                    Math.cos(this.angle + this.body.facing),
-                i =
-                  this.offset *
-                    Math.sin(this.direction + this.angle + this.body.facing) +
-                  (1.35 * this.length - (this.width * this.settings.size) / 2) *
-                    Math.sin(this.angle + this.body.facing);
+              let a = getGunMuzzlePosition(this, 1.35),
+                s = a.x,
+                i = a.y;
               if (t && this.cycle >= 1) {
                 if (!this.body.master.emp.active)
                   if (this.onFire) this.onFire(this, [s, i, e]);
@@ -3746,16 +4480,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             3 * Math.log(Math.sqrt(s.spd) + this.trueRecoil + 1) + 1),
           (this.motion += this.lastShot.power),
           (this.recoilDir = this.body.facing + this.angle);
-        let l =
-            this.offset *
-              Math.cos(this.direction + this.angle + this.body.facing) +
-            (1.35 * this.length - (this.width * this.settings.size) / 2) *
-              Math.cos(this.angle + this.body.facing),
-          h =
-            this.offset *
-              Math.sin(this.direction + this.angle + this.body.facing) +
-            (1.35 * this.length - (this.width * this.settings.size) / 2) *
-              Math.sin(this.angle + this.body.facing);
+        let d = getGunMuzzlePosition(this, 1.35),
+          l = d.x,
+          h = d.y;
         let a = util.clamp(
             ran.gauss(0, Math.sqrt(this.settings.shudder, 1)),
             -1.5 * this.settings.shudder,
@@ -3803,6 +4530,11 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (u.alwaysActive = this.body.alwaysActive),
           (u.velocity = n),
           (u.initialBulletSpeed = r),
+          (u.firedFromGun = this),
+          (u.firedFromMuzzle = {
+            x: this.body.x + this.body.size * l,
+            y: this.body.y + this.body.size * h,
+          }),
           this.setSubmerged &&
             (u.submarine.submerged = this.body.submarine.submerged),
           u.submarine.submerged && (u.alpha = 0.15),
@@ -3924,7 +4656,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           case 8:
           case "trap":
             (a.PUSHABILITY = 1 / Math.pow(i.pen, 0.5)),
-              (a.RANGE = 0.5 * s.range);
+              (a.RANGE = 0.5 * s.range),
+              (a.RANGE *= getMegaTrapperGrowthRangeMult(this.body));
         }
         for (let e in a)
           null != this.natural[e] &&
@@ -4003,13 +4736,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               "Growth" === c.serverName)
           ),
         targetScoreForQuarterSize: 200000,
-        targetSizeGrowthAtScore: 0.36,
-        sizeGrowthExponent: 0.72,
+        targetSizeGrowthAtScore: 0.42,
+        sizeGrowthExponent: 0.74,
         skillPointPerScore: 200000,
+        maxSkillPoints: 90,
         fovPerGrowth: 0.08,
         maxFovMultiplier: 1.15,
-        healthPerGrowth: 0.5,
-        damagePerGrowth: 0.2,
+        healthPerGrowth: 0.28,
         barrelPerGrowth: 1,
         barrelKnockbackDamage: 0.35,
         barrelKnockbackForce: 0.02,
@@ -4069,9 +4802,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             ? Math.max(0.6, Math.min(1, 1 / (1 + 0.5 * s)))
             : 1),
           (e.growthData.rangeMult = 1 + 0.35 * s),
-          (e.growthData.damageMult = e.isPlayer
-            ? 1 + s * growthMode.damagePerGrowth
-            : 1),
+          // Growth size should not add free projectile damage.
+          (e.growthData.damageMult = 1),
           (e.SIZE = e.growthData.baseSIZE + i),
           isTank &&
             (e.FOV =
@@ -4087,6 +4819,10 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           s > e.skill.growthStep &&
             ((e.skill.points += s - e.skill.growthStep),
             (e.skill.growthStep = s)),
+            (e.skill.points = Math.min(
+              growthMode.maxSkillPoints,
+              Math.max(0, e.skill.points)
+            )),
             (e.growthData.lastSkillStep = e.skill.growthStep);
         }
       },
@@ -4094,18 +4830,113 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         if (!e || !e.guns || !e.guns.length) return null;
         let t = e.guns.find((e) => e && e.canShoot) || e.guns[0];
         if (!t) return null;
-        let i =
-            t.offset * Math.cos(t.direction + t.angle + e.facing) +
-            (1.35 * t.length - (t.width * t.settings.size) / 2) *
-              Math.cos(t.angle + e.facing),
-          a =
-            t.offset * Math.sin(t.direction + t.angle + e.facing) +
-            (1.35 * t.length - (t.width * t.settings.size) / 2) *
-              Math.sin(t.angle + e.facing);
+        let s = getGunMuzzlePosition(t, 1.35);
         return {
-          x: e.x + e.size * i,
-          y: e.y + e.size * a,
+          x: e.x + e.size * s.x,
+          y: e.y + e.size * s.y,
         };
+      },
+      projectilePointBlankTypes = new Set([
+        "bullet",
+        "trap",
+        "drone",
+        "swarm",
+        "block",
+        "minion",
+        "satellite",
+      ]),
+      quickProjectileDeathAnchorWindowMs = 300,
+      projectileDeathFadeSnapshotRetentionMs = 200,
+      isProjectileFromMinion = (e) => {
+        if (!e) return !1;
+        if ("minion" === e.type) return !0;
+        let t = [e.source, e.master, e.parent],
+          s = 0;
+        for (; t.length && s++ < 16; ) {
+          let e = t.shift();
+          if (!e || "object" != typeof e) continue;
+          if ("minion" === e.type) return !0;
+          e.source && e.source !== e && t.push(e.source),
+            e.master && e.master !== e && t.push(e.master),
+            e.parent && e.parent !== e && t.push(e.parent);
+        }
+        return !1;
+      },
+      getProjectileFiringMuzzle = (e) => {
+        if (!e) return null;
+        if (e.firedFromGun && e.firedFromGun.body && !e.firedFromGun.body.isGhost) {
+          let t = getGunMuzzlePosition(e.firedFromGun, 1.35);
+          return {
+            x: e.firedFromGun.body.x + e.firedFromGun.body.size * t.x,
+            y: e.firedFromGun.body.y + e.firedFromGun.body.size * t.y,
+          };
+        }
+        return e.firedFromMuzzle &&
+          Number.isFinite(e.firedFromMuzzle.x) &&
+          Number.isFinite(e.firedFromMuzzle.y)
+          ? e.firedFromMuzzle
+          : null;
+      },
+      getProjectileDeathFadeAnchor = (e) => {
+        if (!e) return null;
+        let t = getProjectileFiringMuzzle(e);
+        if (!t) return null;
+        let s = null;
+        if (e.firedFromGun && e.firedFromGun.body)
+          s = e.firedFromGun.body.facing + (e.firedFromGun.angle || 0);
+        if (
+          (null == s || !Number.isFinite(s)) &&
+          e.velocity &&
+          Number.isFinite(e.velocity.x) &&
+          Number.isFinite(e.velocity.y) &&
+          (e.velocity.x || e.velocity.y)
+        )
+          s = Math.atan2(e.velocity.y, e.velocity.x);
+        if (null == s || !Number.isFinite(s)) return t;
+        let i = Math.max(2, 0.9 * (Number.isFinite(e.size) ? e.size : 1));
+        return {
+          x: t.x + i * Math.cos(s),
+          y: t.y + i * Math.sin(s),
+        };
+      },
+      getProjectilePointBlankDamageMultiplier = (e, t) => {
+        if (!e || !t) return 1;
+        if (!projectilePointBlankTypes.has(e.type) || isProjectileFromMinion(e))
+          return 1;
+        let s = getProjectileFiringMuzzle(e);
+        if (!s) return 1;
+        let i = t.x - s.x,
+          a = t.y - s.y,
+          o = Math.sqrt(i * i + a * a),
+          r = getEntityRoot(e.source || e.master || e),
+          n = r && Number.isFinite(r.size) ? r.size : e.size,
+          l = Math.max(t.size + 0.9 * n, 4);
+        if (o >= l) return 1;
+        let h = util.clamp(1 - o / l, 0, 1),
+          d = 1 + 0.45 * h,
+          c = (
+            (r && r.label) ||
+            (e.source && e.source.label) ||
+            e.label ||
+            ""
+          ).toLowerCase();
+        if (c.includes("destroyer")) {
+          let e = Math.max(t.size + 0.35 * n, 2),
+            s = util.clamp(1 - o / e, 0, 1);
+          d += 1.05 * Math.pow(s, 1.4);
+        }
+        return d;
+      },
+      isGrowthPointBlankClusterHit = (e, t) => {
+        if (!growthMode.isEnabled() || !e || !t) return !1;
+        if (!projectilePointBlankTypes.has(e.type)) return !1;
+        let s = getProjectileFiringMuzzle(e);
+        if (!s) return !1;
+        let i = t.x - s.x,
+          a = t.y - s.y,
+          o = Math.sqrt(i * i + a * a),
+          r = Math.max(e.size + 0.65 * t.size, 4);
+        return o <= r;
       },
       applyBarrelKnockbackDamage = (e, t) => {
         if (
@@ -4116,33 +4947,35 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         )
           return;
         let s = (e.label || "").toLowerCase(),
-          i = s.includes("builder") || s.includes("destroyer"),
-          a =
+          i = s.includes("destroyer"),
+          a = s.includes("builder") || i,
+          o =
             s.includes("trapper") &&
             (s.includes("giga") || s.includes("tera") || s.includes("mega"));
-        if (!i && !a) return;
-        let o = getBarrelTipPosition(e);
-        if (!o) return;
-        let r = t.x - o.x,
-          n = t.y - o.y,
-          l = Math.sqrt(r * r + n * n) || 0.001,
-          h = t.size + 0.35 * e.size;
-        if (l > h) return;
-        let u = Math.max(0, 1 - l / h),
-          d = growthMode.barrelKnockbackDamage + 0.005 * e.size,
-          c =
-            (i ? 1 : 1.35) *
-            (e.damage * (1.2 + 3.2 * u) +
-              Math.pow(e.size, 1.08) * (0.06 + 0.12 * u)),
-          m = Math.max(d, c),
-          p = Math.max(
+        if (!a && !o) return;
+        let r = getBarrelTipPosition(e);
+        if (!r) return;
+        let n = t.x - r.x,
+          l = t.y - r.y,
+          h = Math.sqrt(n * n + l * l) || 0.001,
+          d = t.size + 0.35 * e.size;
+        if (h > d) return;
+        let c = Math.max(0, 1 - h / d),
+          m = growthMode.barrelKnockbackDamage + 0.005 * e.size,
+          p =
+            (a ? (i ? 1.2 : 1) : 1.35) *
+            (e.damage * (1.2 + 3.2 * c) +
+              Math.pow(e.size, 1.08) * (0.06 + 0.12 * c)),
+          g = Math.max(m, p),
+          f = Math.max(
             0.25,
-            growthMode.barrelKnockbackForce * e.size * (1 + 0.9 * u)
+            growthMode.barrelKnockbackForce * e.size * (1 + 0.9 * c)
           );
-        u > 0.88 && (m = Math.max(m, 0.92 * t.health.max));
-        (t.damageReceived += m),
-          (t.accel.x += (p * r) / l),
-          (t.accel.y += (p * n) / l);
+        c > 0.88 && (g = Math.max(g, (i ? 1.1 : 0.92) * t.health.max)),
+          i && c > 0.96 && (g = Math.max(g, 1.28 * t.health.max)),
+          (t.damageReceived += g),
+          (t.accel.x += (f * n) / h),
+          (t.accel.y += (f * l) / h);
       },
       grid = new HSHG(),
       dirtyCheck = (e, t) =>
@@ -4392,6 +5225,10 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (this.spinSpeed = 0.038),
           (this.tierCounter = 0),
           (this.killedByK = !1),
+          (this.killedByWalls = !1),
+          (this.killedByTeamBase = !1),
+          (this.forceProjectileDeathFade = !1),
+          (this.forceProjectileDeathAnchor = !1),
           (this.id = entitiesIdLog++),
           (this.team = this === t ? this.id : t.team),
           (this.submarine = {
@@ -6685,7 +7522,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               this.velocity.null(),
               this.accel.null(),
               setTimeout(() => {
-                this.isAlive && this.kill();
+                if (this.isAlive) {
+                  this.killedByTeamBase = !0;
+                  isProjectileDeathFadeEntity(this) &&
+                    (this.forceProjectileDeathFade = !0);
+                  this.kill();
+                }
               }, 75)
             );
         }
@@ -6926,6 +7768,15 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (this.damageReceived = 0),
           this.isDead())
         ) {
+          if (isProjectileDeathFadeEntity(this)) {
+            this.forceProjectileDeathFade = !0;
+            this.forceProjectileDeathAnchor =
+              Date.now() - this.creationTime <= quickProjectileDeathAnchorWindowMs;
+          }
+          if (this.isPlayer && this.socket) {
+            let e = calculateDeathScoreBonus(this.skill.score);
+            this.socket.pendingDeathScoreBonus = e;
+          }
           null != this.onDead && this.onDead(),
             null != this.modeDead && this.modeDead(),
             c.serverName.includes("Tag") &&
@@ -7061,7 +7912,28 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         newLogs.destroy.start(),
           this.isProtected &&
             util.remove(entitiesToAvoid, entitiesToAvoid.indexOf(this));
-        for (let e of views) e.remove(this);
+        const e =
+          this.forceProjectileDeathFade && isProjectileDeathFadeEntity(this);
+        const t = e && this.forceProjectileDeathAnchor;
+        e
+          ? (t &&
+              (() => {
+                const e = getProjectileDeathFadeAnchor(this);
+                e &&
+                  Number.isFinite(e.x) &&
+                  Number.isFinite(e.y) &&
+                  ((this.x = e.x),
+                  (this.y = e.y),
+                  (this.cx = e.x),
+                  (this.cy = e.y));
+              })(),
+            this.takeSelfie(),
+            setTimeout(() => {
+              for (let e of views) e.remove(this);
+            }, projectileDeathFadeSnapshotRetentionMs))
+          : (() => {
+              for (let e of views) e.remove(this);
+            })();
         null != this.parent &&
           util.remove(this.parent.children, this.parent.children.indexOf(this));
         for (let e of this.turrets) e.destroy();
@@ -7961,6 +8833,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 };
               })()),
               this.makeView(),
+              (this.pendingDeathScoreBonus = 0),
+              (this.mazeWallEdit = null),
               (this.spawnCount = 0),
               (this.name = "undefined"),
               (this.update = (e) => {
@@ -8095,7 +8969,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     a.id,
                   ]),
                   t.set("score", a.skill.score),
-                  t.set("points", a.skill.points),
+                  t.set(
+                    "points",
+                    growthMode.isEnabled()
+                      ? Math.min(growthMode.maxSkillPoints, a.skill.points)
+                      : a.skill.points
+                  ),
                   t.set(
                     "upgrades",
                     a.upgrades
@@ -8435,11 +9314,20 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       ),
                       1
                     );
-                  if (2 !== s.length)
+                  if (s.length < 2 || s.length > 3)
                     return (
                       this.error("spawn", "Ill-sized spawn request", !0), 1
                     );
-                  let t = s[1];
+                  let t = s[1],
+                    n = null;
+                  if (3 === s.length) {
+                    if ("number" != typeof s[2] || !Number.isInteger(s[2]))
+                      return (
+                        this.error("spawn", "Invalid team selection value", !0),
+                        1
+                      );
+                    n = s[2];
+                  }
                   if (
                     ((e =
                       3 === this.betaData.permissions
@@ -8455,6 +9343,18 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       ),
                       1
                     );
+                  if (c.GROWTH_SIEGE_V2) {
+                    if (
+                      (evaluateGrowthSiegeV2DefeatState(), room.gsv2SpawningLocked)
+                    )
+                      return (
+                        this.talk(
+                          "m",
+                          "All Healer Dominators are down. Spawning is disabled until restart."
+                        ),
+                        1
+                      );
+                  }
                   if ("string" != typeof e)
                     return (
                       this.error("spawn", "Non-string name provided", !0), 1
@@ -8463,6 +9363,15 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     return this.error("spawn", "Overly-long name"), 1;
                   if (0 !== t && 1 !== t)
                     return this.error("spawn", "Invalid isNew value", !0), 1;
+                  if (null != n && (n < 0 || n > 8))
+                    return this.error("spawn", "Invalid team selection", !0), 1;
+                  "tdm" === room.gameMode &&
+                    null != n &&
+                    n > room.teamAmount &&
+                    (n = 0);
+                  "tdm" === room.gameMode &&
+                    0 === n &&
+                    (this.rememberedTeam = null);
                   for (let t of blockedNames)
                     if (e.toLowerCase().includes(t))
                       return (
@@ -8478,7 +9387,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     -1 !== views.indexOf(this.view) &&
                       (util.remove(views, views.indexOf(this.view)),
                       this.makeView()),
-                    (this.player = this.spawn(e)),
+                    (this.player = this.spawn(e, n)),
                     t &&
                       this.talk(
                         "R",
@@ -8568,6 +9477,23 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       (i.command.lmb = (16 & t) >> 4),
                       (i.command.mmb = (32 & t) >> 5),
                       (i.command.rmb = (64 & t) >> 6));
+                  if (o && 3 === this.betaData.permissions && this.mazeWallEdit) {
+                    let t = entities.find((e) => e.id === this.mazeWallEdit.id);
+                    if (!t || t.isGhost || "mazeWall" !== t.type)
+                      this.mazeWallEdit = null;
+                    else {
+                      let s = i.target.x + a.x,
+                        r = i.target.y + a.y,
+                        n = Math.max(1, Number(t.SIZE) || 1),
+                        l = util.clamp(Math.abs(s - t.x) / n, 0.35, 50),
+                        h = util.clamp(Math.abs(r - t.y) / n, 0.35, 50);
+                      (t.width = l),
+                        (t.height = h),
+                        (Math.abs(s - this.mazeWallEdit.startX) > 0.25 * n ||
+                          Math.abs(r - this.mazeWallEdit.startY) > 0.25 * n) &&
+                          (this.mazeWallEdit.moved = !0);
+                    }
+                  }
                 }
                 break;
               case "t":
@@ -8661,22 +9587,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                             !i.body.isInMyBase()
                           ) {
                             e.coolDown.time = Date.now();
-                            let t =
-                                e.offset *
-                                  Math.cos(
-                                    e.direction + e.angle + e.body.facing
-                                  ) +
-                                (1.5 * e.length -
-                                  (e.width * e.settings.size) / 2) *
-                                  Math.cos(e.angle + e.body.facing),
-                              s =
-                                e.offset *
-                                  Math.sin(
-                                    e.direction + e.angle + e.body.facing
-                                  ) +
-                                (1.5 * e.length -
-                                  (e.width * e.settings.size) / 2) *
-                                  Math.sin(e.angle + e.body.facing),
+                            let o = getGunMuzzlePosition(e, 1.5),
+                              t = o.x,
+                              s = o.y,
                               a = [];
                             for (let i = 0; i < e.countsOwnKids; i++)
                               a.push(e.fire(t, s, e.body.skill, !0));
@@ -8705,22 +9618,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                             !i.body.isInMyBase()
                           ) {
                             e.coolDown.time = Date.now();
-                            let t =
-                                e.offset *
-                                  Math.cos(
-                                    e.direction + e.angle + e.body.facing
-                                  ) +
-                                (1.5 * e.length -
-                                  (e.width * e.settings.size) / 2) *
-                                  Math.cos(e.angle + e.body.facing),
-                              s =
-                                e.offset *
-                                  Math.sin(
-                                    e.direction + e.angle + e.body.facing
-                                  ) +
-                                (1.5 * e.length -
-                                  (e.width * e.settings.size) / 2) *
-                                  Math.sin(e.angle + e.body.facing),
+                            let o = getGunMuzzlePosition(e, 1.5),
+                              t = o.x,
+                              s = o.y,
                               a = [];
                             for (let i = 0; i < e.countsOwnKids; i++)
                               a.push(e.fire(t, s, e.body.skill, !0));
@@ -8748,22 +9648,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                           !i.body.isInMyBase()
                         ) {
                           e.coolDown.time = Date.now();
-                          let t =
-                              e.offset *
-                                Math.cos(
-                                  e.direction + e.angle + e.body.facing
-                                ) +
-                              (1.5 * e.length -
-                                (e.width * e.settings.size) / 2) *
-                                Math.cos(e.angle + e.body.facing),
-                            s =
-                              e.offset *
-                                Math.sin(
-                                  e.direction + e.angle + e.body.facing
-                                ) +
-                              (1.5 * e.length -
-                                (e.width * e.settings.size) / 2) *
-                                Math.sin(e.angle + e.body.facing),
+                          let o = getGunMuzzlePosition(e, 1.5),
+                            t = o.x,
+                            s = o.y,
                             a = [];
                           for (let i = 0; i < e.countsOwnKids; i++)
                             a.push(e.fire(t, s, e.body.skill, !0));
@@ -9083,6 +9970,18 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     ),
                     1
                   );
+                if (1 === s[0] && 0 === this.betaData.permissions) {
+                  if (!o) return;
+                  if (a.underControl)
+                    return a.sendMessage(
+                      "You cannot self-destruct while controlling a Dominator or Mothership."
+                    );
+                  if (!a.invuln)
+                    return a.sendMessage(
+                      "Self-destruct is only available during spawn invulnerability."
+                    );
+                  return (a.killedByK = !0), void a.kill();
+                }
                 if (!o || 0 === this.betaData.permissions) return;
                 if (a.underControl)
                   return a.sendMessage(
@@ -9410,6 +10309,211 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       s.refreshBodyAttributes && s.refreshBodyAttributes();
                     }
                     break;
+                  case 15:
+                    {
+                      // Copy team/color from the entity under cursor (press T).
+                      let t = {
+                        x: i.target.x + a.x,
+                        y: i.target.y + a.y,
+                      };
+                      let s = null,
+                        r = 1 / 0;
+                      for (let e of entities) {
+                        if (!e || e.isGhost || e === a) continue;
+                        let n = util.getDistance(e, t);
+                        if (n < 1.15 * e.size && n < r) (s = e), (r = n);
+                      }
+                      if (!s)
+                        return a.sendMessage(
+                          "No entity found under your cursor."
+                        );
+                      if (!Number.isFinite(s.team))
+                        return a.sendMessage(
+                          "That entity does not have a valid team."
+                        );
+
+                      let n = s.team,
+                        l = [10, 12, 11, 15, 3, 35, 36, 0];
+                      a.team = n;
+                      null != s.color && (a.color = s.color);
+
+                      if (Number.isInteger(n) && n < 0 && -n <= l.length) {
+                        let e = -n;
+                        (i.team = e),
+                          (this.rememberedTeam = e),
+                          (i.teamColor = l[e - 1]),
+                          (a.color = l[e - 1]);
+                      } else if (Number.isInteger(n) && n > 0 && n <= l.length) {
+                        (i.team = n),
+                          (this.rememberedTeam = n),
+                          (i.teamColor = l[n - 1]),
+                          (a.color = l[n - 1]);
+                      } else null != s.color && (i.teamColor = s.color);
+
+                      for (let e of entities)
+                        e.master &&
+                          e.master.id === a.id &&
+                          e.id !== a.id &&
+                          ((e.team = n), null != s.color && (e.color = s.color));
+                      a.sendMessage(
+                        "Copied team from " + (s.label || "that entity") + "."
+                      );
+                    }
+                    break;
+                  case 16:
+                    {
+                      // Start maze-wall edit mode (hold V): tap existing wall to remove, or spawn/resize.
+                      let t = {
+                          x: i.target.x + a.x,
+                          y: i.target.y + a.y,
+                        },
+                        s = null,
+                        r = 1 / 0;
+                      for (let e of entities) {
+                        if (!e || e.isGhost || "mazeWall" !== e.type) continue;
+                        let i = e.SIZE * Math.max(1, Math.abs(e.width || 1)),
+                          a = e.SIZE * Math.max(1, Math.abs(e.height || 1)),
+                          o = Math.abs(t.x - e.x),
+                          n = Math.abs(t.y - e.y);
+                        if (o <= i && n <= a) {
+                          let t = o + n;
+                          t < r && ((s = e), (r = t));
+                        }
+                      }
+                      if (s)
+                        return void (this.mazeWallEdit = {
+                          id: s.id,
+                          mode: "existing",
+                          moved: !1,
+                          startX: t.x,
+                          startY: t.y,
+                        });
+                      if (!Class.mazeObstacle) {
+                        this.mazeWallEdit = null;
+                        return a.sendMessage("Maze wall class is unavailable.");
+                      }
+                      let o = entities.find(
+                          (e) =>
+                            e &&
+                            !e.isGhost &&
+                            "mazeWall" === e.type &&
+                            Number.isFinite(e.SIZE)
+                        ),
+                        n = 32,
+                        l = c.MAZE || {};
+                      Number.isFinite(l.width)
+                        ? (n = l.width)
+                        : Number.isFinite(l.WIDTH) && (n = l.WIDTH);
+                      n = Math.max(8, n);
+                      let h = o
+                        ? o.SIZE
+                        : Math.max(8, Math.round(room.width / n / 2));
+                      let d = new Entity(t);
+                      d.define(Class.mazeObstacle),
+                        (d.SIZE = h),
+                        (d.width = 1),
+                        (d.height = 1),
+                        (d.team = -101),
+                        (d.alwaysActive = !0),
+                        (d.settings.canGoOutsideRoom = !0),
+                        d.protect(),
+                        d.life(),
+                        (this.mazeWallEdit = {
+                          id: d.id,
+                          mode: "new",
+                          moved: !1,
+                          startX: t.x,
+                          startY: t.y,
+                        });
+                    }
+                    break;
+                  case 17:
+                    {
+                      if (!this.mazeWallEdit) break;
+                      let e = entities.find((e) => e.id === this.mazeWallEdit.id);
+                      if (
+                        e &&
+                        !e.isGhost &&
+                        "mazeWall" === e.type &&
+                        "existing" === this.mazeWallEdit.mode &&
+                        !this.mazeWallEdit.moved
+                      )
+                        e.kill(), a.sendMessage("Removed maze wall.");
+                      this.mazeWallEdit = null;
+                    }
+                    break;
+                  case 18:
+                    {
+                      // Cycle team for the entity under cursor (press Y, developer token only).
+                      let t = {
+                        x: i.target.x + a.x,
+                        y: i.target.y + a.y,
+                      };
+                      let s = null,
+                        r = 1 / 0;
+                      for (let e of entities) {
+                        if (!e || e.isGhost) continue;
+                        let i = Number.isFinite(e.size) && e.size > 0 ? e.size : 1,
+                          a = util.getDistance(e, t);
+                        if (a < 1.15 * i && a < r) (s = e), (r = a);
+                      }
+                      if (!s)
+                        return a.sendMessage(
+                          "No entity found under your cursor."
+                        );
+
+                      let n = [];
+                      for (let e = 1; e <= room.teamAmount; e++) n.push(-e);
+                      n.push(-100, -101), (n = [...new Set(n)]);
+                      n.length || (n = [-1, -100, -101]);
+
+                      let l = Number.isFinite(s.team) ? Math.round(s.team) : n[0],
+                        h = n.indexOf(l),
+                        d = n[(h + 1 + n.length) % n.length],
+                        m = (e) => {
+                          if (!e) return;
+                          e.team = d;
+                          if (null == e.color) return;
+                          Number.isInteger(d) && d <= -1 && d >= -room.teamAmount
+                            ? (e.color = getTeamColor(d))
+                            : -100 === d
+                            ? (e.color = 13)
+                            : -101 === d && (e.color = 3);
+                        },
+                        p = (e) =>
+                          Number.isInteger(e) && e <= -1 && e >= -room.teamAmount
+                            ? `${teamNames[-e - 1] || "TEAM " + -e} (${e})`
+                            : -100 === e
+                            ? "ENEMY/NEUTRAL (-100)"
+                            : -101 === e
+                            ? "ARENA/MAZE (-101)"
+                            : "TEAM " + e;
+
+                      m(s);
+                      for (let e of entities)
+                        e &&
+                          !e.isGhost &&
+                          e.master &&
+                          e.master.id === s.id &&
+                          e.id !== s.id &&
+                          m(e);
+
+                      if (s === a) {
+                        if (Number.isInteger(d) && d < 0 && -d <= room.teamAmount) {
+                          let e = -d;
+                          (i.team = e),
+                            (this.rememberedTeam = e),
+                            (i.teamColor = getTeamColor(d));
+                        } else this.rememberedTeam = null;
+                      }
+
+                      a.sendMessage(
+                        `Team cycle: ${p(l)} -> ${p(d)} on ${
+                          s.label || "that entity"
+                        }.`
+                      );
+                    }
+                    break;
                   default:
                     return (
                       this.error(
@@ -9458,7 +10562,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     a.color = s[1];
                     break;
                   case 2:
-                    a.skill.points = s[1];
+                    a.skill.points = growthMode.isEnabled()
+                      ? Math.max(
+                          0,
+                          Math.min(growthMode.maxSkillPoints, Math.round(s[1]))
+                        )
+                      : s[1];
                     break;
                   case 3:
                     // Keep beta-tester score editing within sane bounds.
@@ -9687,14 +10796,20 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       ),
                       1
                     );
-                  if ("number" != typeof t || !Number.isFinite(t))
+                  if (
+                    "spawn_shape" !== e &&
+                    ("number" != typeof t || !Number.isFinite(t))
+                  )
                     return (
                       this.error("admin panel", "Non-numeric admin value", !0),
                       1
                     );
-                  let v = t,
-                    vInt = Math.round(t),
+                  let v = "number" == typeof t && Number.isFinite(t) ? t : 0,
+                    vInt = Math.round(v),
                     r = (e, t, s) => Math.max(t, Math.min(s, e)),
+                    pointsCap = growthMode.isEnabled()
+                      ? growthMode.maxSkillPoints
+                      : 5e3,
                     n = !1;
                   switch (e) {
                     case "score_delta":
@@ -9705,15 +10820,15 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       (a.skill.score = r(vInt, 0, 1e8)), (n = !0);
                       break;
                     case "points_delta":
-                      a.skill.points = r(a.skill.points + vInt, 0, 5e3);
+                      a.skill.points = r(a.skill.points + vInt, 0, pointsCap);
                       break;
                     case "points_set":
-                      a.skill.points = r(vInt, 0, 5e3);
+                      a.skill.points = r(vInt, 0, pointsCap);
                       break;
                     case "bots_delta":
                     case "bots_set":
                       {
-                        const cap = 50;
+                        const cap = c.GROWTH_TESTING ? 1e4 : 50;
                         const next =
                           "bots_set" === e
                             ? r(vInt, 0, cap)
@@ -9760,6 +10875,15 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                         }
                       }
                       break;
+                    case "obstacles_set":
+                      {
+                        // Hard cap keeps world edits from creating excessive static entities.
+                        // This controls only regular obstacles; maze walls are managed separately.
+                        const cap = 2e3;
+                        room._worldEditObstacleCount = r(vInt, 0, cap);
+                        room.regenerateObstacles(!1);
+                      }
+                      break;
                     case "fov_delta":
                     case "fov_set":
                       {
@@ -9789,26 +10913,181 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       break;
                     case "spawn_boss":
                       {
+                        const selectedBoss = {
+                          1: Class.eggBossTier1AI || Class.eggBossTier1,
+                          2: Class.summonerAI || Class.summoner,
+                          3: Class.defenderAI || Class.defender1,
+                          4: Class.leviathanAI || Class.leviathan,
+                          5: Class.snowflakeAI || Class.snowflake,
+                          6: Class.eliteDestroyerAI || Class.eliteDestroyer,
+                          7: Class.eliteGunnerAI || Class.eliteGunner,
+                          8: Class.eliteSprayerAI || Class.eliteSprayer,
+                          9: Class.eliteTwinAI || Class.eliteTwin,
+                          10: Class.eliteMachineAI || Class.eliteMachine,
+                          11: Class.eliteTrapAI || Class.eliteTrap,
+                          12: Class.eliteBorerAI || Class.eliteBorer,
+                          13: Class.eliteSniperAI || Class.eliteSniper,
+                          14: Class.eliteBasicAI || Class.eliteBasic,
+                          15: Class.eliteInfernoAI || Class.eliteInferno,
+                          16: Class.eliteRifleAI || Class.eliteRifle,
+                          17: Class.guardianAI || Class.guardian,
+                          18: Class.palisadeAI || Class.palisade,
+                          19: Class.skimBossAI || Class.skimBoss,
+                          20: Class.octogeddonAI || Class.octogeddon,
+                          21: Class.hexadecagorAI || Class.hexadecagor,
+                          22: Class.blitzkriegAI || Class.blitzkrieg,
+                          23: Class.demolisherAI || Class.demolisher,
+                          24: Class.cutterAI || Class.cutter,
+                          25: Class.pulsarAI || Class.pulsar,
+                          26: Class.colliderAI || Class.collider,
+                          27: Class.deltrabladeAI || Class.deltrablade,
+                          28: Class.magnetarAI || Class.magnetar,
+                          29: Class.xyvAI || Class.xyv,
+                          30: Class.constAI || Class.constellation,
+                          31: Class.bowAI || Class.bow,
+                          32: Class.greenGuardianAI || Class.greenGuardian,
+                          33: Class.fallenBoosterAI || Class.fallenBooster,
+                          34: Class.fallenOverlordAI || Class.fallenOverlord,
+                          35: Class.fallenPistonAI || Class.fallenPiston,
+                          36: Class.fallenAutoTankAI || Class.fallenAutoTank,
+                          37: Class.eggQueenTier1AI || Class.eggQueenTier1,
+                          38: Class.eggQueenTier2AI || Class.eggQueenTier2,
+                          39: Class.eggQueenTier3AI || Class.eggQueenTier3,
+                          40: Class.AWP_1AI || Class.AWP_1,
+                          41: Class.AWP_14AI || Class.AWP_14,
+                          42: Class.AWP_sin16AI || Class.AWP_sin16,
+                          43: Class.AWP_tan54AI || Class.AWP_tan54,
+                          44: Class.AWP_log24AI || Class.AWP_log24,
+                          45: Class.AWP_69AI || Class.AWP_69,
+                          46: Class.AWP_cos39AI || Class.AWP_cos39,
+                          47: Class.AWP_IceAI || Class.AWP_Ice,
+                          48: Class.AWP_24AI || Class.AWP_24,
+                          49: Class.AWP_RingAI || Class.AWP_Ring,
+                          50: Class.AWP_cos5AI || Class.AWP_cos5,
+                          51: Class.AWP_psAI || Class.AWP_ps,
+                          52: Class.AWP_11AI || Class.AWP_11,
+                          53: Class.AWP_8AI || Class.AWP_8,
+                          54: Class.AWP_21AI || Class.AWP_21,
+                          55: Class.AWP_28AI || Class.AWP_28,
+                          56: Class.RK_1AI || Class.RK_1,
+                          57: Class.hexashipAI || Class.hexaship,
+                          58: Class.fallenCavalcadeAI || Class.fallenCavalcade,
+                          59: Class.fallenFighterAI || Class.fallenFighter,
+                          60: Class.reanimFarmerAI || Class.reanimFarmer,
+                          61: Class.reanimHeptaTrapAI || Class.reanimHeptaTrap,
+                          62: Class.reanimUziAI || Class.reanimUzi,
+                          63: Class.ultMultitoolAI || Class.ultMultitool,
+                          64: Class.nailerAI || Class.nailer,
+                          65: Class.gravibusAI || Class.gravibus,
+                          66: Class.cometAI || Class.comet,
+                          67: Class.brownCometAI || Class.brownComet,
+                          68: Class.orangicusAI || Class.orangicus,
+                          69: Class.atriumAI || Class.atrium,
+                          70: Class.constructionistAI || Class.constructionist,
+                          71: Class.dropshipAI || Class.dropship,
+                          72: Class.armySentrySwarmAI || Class.armySentrySwarm,
+                          73: Class.armySentryGunAI || Class.armySentryGun,
+                          74: Class.armySentryTrapAI || Class.armySentryTrap,
+                          75: Class.armySentryRangerAI || Class.armySentryRanger,
+                          76: Class.derogatorAI || Class.derogator,
+                          77: Class.octagronAI || Class.octagron,
+                          78: Class.ultimateAI || Class.ultimateDestroyer,
+                          79: Class.alphaSentryAI || Class.alphaSentry,
+                          80: Class.asteroidAI || Class.asteroid,
+                          81: Class.trapeFighterAI || Class.trapeFighter,
+                          82: Class.visUltimaAI || Class.visUltima,
+                          83: Class.gunshipAI || Class.gunship,
+                          84: Class.messengerAI || Class.messenger,
+                          85: Class.aquamarineAI || Class.aquamarine,
+                          86: Class.kioskAI || Class.kiosk,
+                          87: Class.vanguardAI || Class.vanguard,
+                          88: Class.conquistadorAI || Class.conquistador,
+                          89: Class.sassafrasAI || Class.sassafras,
+                          90: Class.destroyerDominatorAI || Class.destroyerDominator,
+                          91: Class.gunnerDominatorAI || Class.gunnerDominator,
+                          92: Class.trapperDominatorAI || Class.trapperDominator,
+                          93: Class.droneDominatorAI || Class.droneDominator,
+                          94: Class.autoDominatorAI || Class.autoDominator,
+                          95: Class.steamrollDominatorAI || Class.steamrollDominator,
+                          96: Class.crockettDominatorAI || Class.crockettDominator,
+                        }[vInt];
+                        const isDominatorBossSelection = vInt >= 90 && vInt <= 96;
                         let e = (bossRushBosses || []).filter((e) => null != e),
-                          t = e.length
-                            ? ran.choose(e)
-                            : ran.choose(
-                                [
-                                  Class.summonerAI,
-                                  Class.defenderAI,
-                                  Class.guardianAI,
-                                ].filter((e) => null != e)
-                              );
+                          t =
+                            selectedBoss ||
+                            (e.length
+                              ? ran.choose(e)
+                              : ran.choose(
+                                  [
+                                    Class.summonerAI,
+                                    Class.defenderAI,
+                                    Class.guardianAI,
+                                  ].filter((e) => null != e)
+                                ));
                         if (!t) break;
-                        let s = new Entity(room.randomType("nest"));
+                        let spawnPos =
+                            i &&
+                            i.target &&
+                            Number.isFinite(i.target.x) &&
+                            Number.isFinite(i.target.y)
+                              ? {
+                                  x: r(i.target.x + a.x, 0, room.width),
+                                  y: r(i.target.y + a.y, 0, room.height),
+                                }
+                              : room.randomType("nest"),
+                          s = new Entity(spawnPos);
                         (s.team = -100),
                           s.define(t),
-                          (s.color = 5),
                           (s.name = ran.chooseBossName("a", 1)[0]),
                           (s.controllers = [
                             new ioTypes.nearestDifferentMaster(s),
                             new ioTypes.wanderAroundMap(s),
                           ]);
+                        if (isDominatorBossSelection) {
+                          (s.team = -100),
+                            (s.color = 13),
+                            (s.isDominator = !0),
+                            s.settings && (s.settings.hitsOwnType = "pushOnlyTeam"),
+                            (s.name = "Dominator");
+                        }
+                      }
+                      break;
+                    case "spawn_shape":
+                      {
+                        const shapeKey =
+                          "string" == typeof t ? (t + "").trim().toLowerCase() : "";
+                        if (!shapeKey) break;
+                        const shapeClass = spawnableShapeMap.get(shapeKey);
+                        if (!shapeClass) {
+                          this.talk(
+                            "Z",
+                            `[ERROR] Unknown shape key: ${shapeKey}`
+                          );
+                          break;
+                        }
+                        let spawnPos =
+                            i &&
+                            i.target &&
+                            Number.isFinite(i.target.x) &&
+                            Number.isFinite(i.target.y)
+                              ? {
+                                  x: r(i.target.x + a.x, 0, room.width),
+                                  y: r(i.target.y + a.y, 0, room.height),
+                                }
+                              : {
+                                  x: r(
+                                    a.x + 160 * (2 * Math.random() - 1),
+                                    0,
+                                    room.width
+                                  ),
+                                  y: r(
+                                    a.y + 160 * (2 * Math.random() - 1),
+                                    0,
+                                    room.height
+                                  ),
+                                },
+                          s = new Entity(spawnPos);
+                        (s.team = -100), s.define(shapeClass), (s.facing = ran.randomAngle());
                       }
                       break;
                     case "teleport_mouse":
@@ -10086,16 +11365,28 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 );
             }
           }
-          spawn(e) {
+          spawn(e, n = null) {
             let t = {
                 id: this.id,
               },
               s = {};
-            t.team = this.rememberedTeam;
+            this.mazeWallEdit = null;
+            t.team = Number(this.rememberedTeam);
+            Number.isInteger(t.team) || (t.team = null);
             let i = 10;
             if ("tdm" === room.gameMode) {
-              (null == t.team || room.defeatedTeams.includes(-t.team)) &&
-                (t.team = getTeam(1));
+              0 === n && (t.team = null);
+              let o = Number.isInteger(n) ? n : null;
+              o &&
+                o > 0 &&
+                o <= room.teamAmount &&
+                !room.defeatedTeams.includes(-o) &&
+                (t.team = o);
+              (null == t.team ||
+                t.team < 1 ||
+                t.team > room.teamAmount ||
+                room.defeatedTeams.includes(-t.team)) &&
+                (t.team = getRandomActiveTeam());
               let e = ["spn", "bas", "n_b", "bad"]
                 .map((e) => e + t.team)
                 .filter((e) => room[e] && room[e].length);
@@ -10113,7 +11404,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 s = room.gaussInverse(5);
               } while (dirtyCheck(s, 50) && i--);
             this.rememberedTeam = t.team;
-            let a = new Entity(s);
+            let a = new Entity(s),
+              o = Math.max(0, Math.floor(this.pendingDeathScoreBonus || 0));
+            this.pendingDeathScoreBonus = 0;
             return (
               c.RANKED_BATTLE && (a.roomId = this.roomId),
               a.protect(),
@@ -10140,6 +11433,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 "tdm" === room.gameMode && room.bas1.length ? 6e4 : 18e4,
               ]),
               (t.body = a),
+              o > 0 &&
+                ((a.skill.score = Math.min(1e8, (a.skill.score || 0) + o)),
+                (() => {
+                  for (; a.skill.maintain(); );
+                })(),
+                a.refreshBodyAttributes(),
+                a.sendMessage("Respawn bonus: +" + o + " score.")),
               "tdm" === room.gameMode
                 ? ((a.team = -t.team),
                   (a.color = [10, 12, 11, 15, 3, 35, 36, 0][t.team - 1]))
@@ -10496,9 +11796,175 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   }),
                   (n = util.getDistance(o, r));
             };
+            const droneSoftSubmergeBaseStrength = 0.24;
+            const droneSoftSubmergeGrowthPerScale = 1;
+            const droneSoftSubmergeMaxStrength = 10;
+            const softSubmergeGrowthClassPattern =
+              /factory|spawner|director|overseer|overlord|manager|necromancer|underseer|headman|professor|carrier|battleship|cruiser/;
+            const isDroneOrMinion = (e) =>
+              !!e && ("drone" === e.type || "minion" === e.type || "swarm" === e.type);
+            const getSoftSubmergeController = (e) => {
+              if (!e) return null;
+              let t = getEntityRoot(e);
+              return t && ("tank" === t.type || "miniboss" === t.type) ? t : null;
+            };
+            const isSoftSubmergeGrowthClass = (e) => {
+              let t = ((e && e.label) || "").toLowerCase().trim();
+              return softSubmergeGrowthClassPattern.test(t);
+            };
+            const getDroneSoftSubmergeStrength = (e, t) => {
+              let s = getSoftSubmergeController(e),
+                i = getSoftSubmergeController(t),
+                a = s || i,
+                o = droneSoftSubmergeBaseStrength;
+              if (!a || !isSoftSubmergeGrowthClass(a)) return o;
+              let r = getEntitySizeGrowthScale(a);
+              if (!Number.isFinite(r) || r <= 1) return o;
+              return util.clamp(
+                o + droneSoftSubmergeGrowthPerScale * (r - 1),
+                o,
+                droneSoftSubmergeMaxStrength
+              );
+            };
+            const canSoftSubmerge = (e, t) => {
+              if (!isDroneOrMinion(e) || !isDroneOrMinion(t)) return !1;
+              let s = getSoftSubmergeController(e),
+                i = getSoftSubmergeController(t);
+              return !(!s || !i || s.id !== i.id);
+            };
+            const softSubmergeCollide = (
+              e,
+              t,
+              s = null
+            ) => {
+              Number.isFinite(s) || (s = getDroneSoftSubmergeStrength(e, t));
+              let i = {
+                  x: e.x + e.m_x,
+                  y: e.y + e.m_y,
+                },
+                a = {
+                  x: t.x + t.m_x,
+                  y: t.y + t.m_y,
+                },
+                o = util.getDistance(i, a);
+              if (0 === o) {
+                let s = new Vector(
+                  2 * Math.random() - 1,
+                  2 * Math.random() - 1
+                );
+                return (
+                  (e.accel.x += 0.2 * s.x),
+                  (e.accel.y += 0.2 * s.y),
+                  (t.accel.x -= 0.2 * s.x),
+                  void (t.accel.y -= 0.2 * s.y)
+                );
+              }
+              let r = e.realSize + t.realSize,
+                n = r * (1 - util.clamp(s, 0, 0.45));
+              if (o >= n) return;
+              let l = (0.03 * (n - o)) / room.speed;
+              (e.accel.x += (l * (i.x - a.x)) / o),
+                (e.accel.y += (l * (i.y - a.y)) / o),
+                (t.accel.x -= (l * (i.x - a.x)) / o),
+                (t.accel.y -= (l * (i.y - a.y)) / o);
+            };
+            const isTdmTeammateTank = (e, t) =>
+              "tdm" === c.MODE &&
+              e &&
+              t &&
+              e.team === t.team &&
+              -101 !== e.team &&
+              ("tank" === e.type || "miniboss" === e.type) &&
+              ("tank" === t.type || "miniboss" === t.type) &&
+              !e.isDominator &&
+              !t.isDominator &&
+              !e.isInMyBase() &&
+              !t.isInMyBase() &&
+              e.master &&
+              t.master &&
+              e.master.master &&
+              t.master.master &&
+              e.master.master.id !== t.master.master.id;
+            const dominatorPassThroughProjectileTypes = new Set([
+              "bullet",
+              "trap",
+              "drone",
+              "swarm",
+              "minion",
+              "block",
+            ]);
+            const isNeutralTestingOrYellowDominatorTeam = (e) =>
+              -100 === e || -101 === e || -5 === e;
+            const getDominatorCollisionRoot = (e) => {
+              if (!e) return null;
+              if (e.isDominator) return e;
+              if (e.bond && e.bond.isDominator) return e.bond;
+              let t = getEntityRoot(e);
+              return t && t.isDominator ? t : null;
+            };
+            const shouldPassThroughAlliedDominator = (e, t) => {
+              if (!e || !t) return !1;
+              let s = getDominatorCollisionRoot(e),
+                i = getDominatorCollisionRoot(t);
+              if (!s && !i) return !1;
+              if (s && i) return !1;
+              let a = s || i,
+                o = s ? t : e;
+              return !(
+                !dominatorPassThroughProjectileTypes.has(o.type) ||
+                !Number.isFinite(a.team) ||
+                a.team !== o.team ||
+                isNeutralTestingOrYellowDominatorTeam(a.team)
+              );
+            };
+            const softTeammateTankCollide = (e, t, s = 0.28) => {
+              let i = {
+                  x: e.x + e.m_x,
+                  y: e.y + e.m_y,
+                },
+                a = {
+                  x: t.x + t.m_x,
+                  y: t.y + t.m_y,
+                },
+                o = util.getDistance(i, a);
+              if (0 === o) {
+                let s = new Vector(
+                  2 * Math.random() - 1,
+                  2 * Math.random() - 1
+                );
+                return (
+                  (e.accel.x += 0.12 * s.x),
+                  (e.accel.y += 0.12 * s.y),
+                  (t.accel.x -= 0.12 * s.x),
+                  void (t.accel.y -= 0.12 * s.y)
+                );
+              }
+              let r = e.realSize + t.realSize,
+                n = r * (1 - util.clamp(s, 0, 0.6));
+              if (o >= n) return;
+              let l = Math.max(1e-4, e.realSize),
+                h = Math.max(1e-4, t.realSize),
+                d = util.clamp(Math.pow(h / l, 0.7), 0.35, 1.9),
+                c = util.clamp(Math.pow(l / h, 0.7), 0.35, 1.9),
+                m = (0.05 * (n - o)) / room.speed,
+                u = (i.x - a.x) / o,
+                y = (i.y - a.y) / o;
+              (e.accel.x += m * d * u),
+                (e.accel.y += m * d * y),
+                (t.accel.x -= m * c * u),
+                (t.accel.y -= m * c * y);
+            };
             const t = (e, t, s, i, a = !1) => {
+                const S =
+                  e &&
+                  t &&
+                  e.master &&
+                  t.master &&
+                  e.master.id === t.master.id &&
+                  ("drone" === e.type || "minion" === e.type) &&
+                  ("drone" === t.type || "minion" === t.type);
                 let o = Math.min(e.stepRemaining, t.stepRemaining),
-                  r = t.size + e.size,
+                  r = (t.size + e.size) * (S ? 0.82 : 1),
                   n = new Vector(e.m_x, e.m_y),
                   l = new Vector(t.m_x, t.m_y),
                   h = new Vector(o * (n.x - l.x), o * (n.y - l.y)),
@@ -10618,6 +12084,15 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                               t.damageMultiplier() *
                               Math.min(2, Math.max(s._n, 1) * s._n),
                           };
+                        let y = {
+                          _me: getProjectilePointBlankDamageMultiplier(e, t),
+                          _n: getProjectilePointBlankDamageMultiplier(t, e),
+                        },
+                          C = {
+                            _me: isGrowthPointBlankClusterHit(e, t),
+                            _n: isGrowthPointBlankClusterHit(t, e),
+                        };
+                        (a._me *= y._me), (a._n *= y._n),
                         e.settings.ratioEffects &&
                           (a._me *= Math.min(
                             1,
@@ -10653,10 +12128,17 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                         t.shield.max && (r._me -= t.shield.getDamage(r._me)),
                           e.shield.max && (r._n -= e.shield.getDamage(r._n));
                         let n = e.health.getDamage(r._n, !1);
-                        (p._me = n > e.health.amount ? e.health.amount / n : 1),
+                        (p._me = C._me
+                          ? 1
+                          : n > e.health.amount
+                          ? e.health.amount / n
+                          : 1),
                           (n = t.health.getDamage(r._me, !1)),
-                          (p._n =
-                            n > t.health.amount ? t.health.amount / n : 1),
+                          (p._n = C._n
+                            ? 1
+                            : n > t.health.amount
+                            ? t.health.amount / n
+                            : 1),
                           (e.damageReceived += a._n * p._n),
                           (t.damageReceived += a._me * p._me);
                       }
@@ -10715,13 +12197,16 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                           x: o * m.x,
                           y: o * m.y,
                         },
+                        l = S ? 0.2 : 1,
                         n = {
                           _me:
                             ((c.KNOCKBACK_CONSTANT * e.pushability) / e.mass) *
-                            p._n,
+                            p._n *
+                            l,
                           _n:
                             ((c.KNOCKBACK_CONSTANT * t.pushability) / t.mass) *
-                            p._me,
+                            p._me *
+                            l,
                         };
                       (e.accel.x += n._me * r.x),
                         (e.accel.y += n._me * r.y),
@@ -10757,6 +12242,34 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               if (!a.activation.check() && !o.activation.check()) return 0;
               if (a.submarine.submerged !== o.submarine.submerged) return 0;
               if (c.RANKED_BATTLE && a.roomId !== o.roomId) return 0;
+              if (c.GROWTH_SIEGE_V2) {
+                let e = null,
+                  t = null;
+                "bullet" === a.type && a.team === o.team
+                  ? ((e = a), (t = o))
+                  : "bullet" === o.type &&
+                    o.team === a.team &&
+                    ((e = o), (t = a));
+                if (
+                  e &&
+                  t &&
+                  e.hitsOwnTeam &&
+                  "tank" === t.type &&
+                  (t.isPlayer || t.isBot)
+                ) {
+                  const s = 0.023 * t.health.max;
+                  t.health.amount = Math.min(t.health.max, t.health.amount + s),
+                    t.shield &&
+                      t.shield.max &&
+                      (t.shield.amount = Math.min(
+                        t.shield.max,
+                        t.shield.amount + 0.011 * t.health.max
+                      )),
+                    e.kill();
+                  return 0;
+                }
+              }
+              if (shouldPassThroughAlliedDominator(a, o)) return 0;
               if (
                 "forcedNever" !== a.settings.hitsOwnType &&
                 "forcedNever" !== o.settings.hitsOwnType
@@ -10772,6 +12285,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     "minion" !== a.type)
                 )
                   return 0;
+                if (canSoftSubmerge(a, o)) return softSubmergeCollide(a, o), 0;
                 switch (!0) {
                   case a.passive || o.passive:
                     if (
@@ -10789,10 +12303,14 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                           e(a, o);
                           break;
                         case "hardWithBuffer":
-                          a.master.id === o.master.id && e(a, o, 30);
+                          canSoftSubmerge(a, o)
+                            ? softSubmergeCollide(a, o)
+                            : a.master.id === o.master.id && e(a, o, 30);
                           break;
                         case "hardOnlyDrones":
-                          a.master.id === o.master.id && e(a, o);
+                          canSoftSubmerge(a, o)
+                            ? softSubmergeCollide(a, o)
+                            : a.master.id === o.master.id && e(a, o);
                       }
                     break;
                   case a.team === o.team &&
@@ -10826,7 +12344,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     {
                       let e = "wall" === a.type ? a : o,
                         s = "wall" === a.type ? o : a;
-                      if (s.settings.diesByObstacles) return s.kill();
+                      if (s.settings.diesByObstacles)
+                        return (
+                          (s.killedByWalls = !0),
+                          isProjectileDeathFadeEntity(s) &&
+                            (s.forceProjectileDeathFade = !0),
+                          s.kill()
+                        );
                       if (
                         s.settings.goThruObstacle ||
                         "mazeWall" === s.type ||
@@ -10924,6 +12448,38 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       if (a.type === o.type) return;
                       let e = "mazeWall" === a.type ? a : o,
                         t = "mazeWall" === a.type ? o : a;
+                      if (e.isGrowthSiegeDivider) {
+                        const s = t.master || t,
+                          i =
+                            -100 === t.team ||
+                            -100 === s.team ||
+                            "miniboss" === t.type ||
+                            "miniboss" === s.type;
+                        if (
+                          "tank" === t.type &&
+                          (t.isPlayer || t.isBot) &&
+                          !t.godmode &&
+                          !t.invuln
+                        ) {
+                          const e = util.time();
+                          if (
+                            !Number.isFinite(t._gsv2DividerLastDamageAt) ||
+                            e - t._gsv2DividerLastDamageAt >= 160
+                          ) {
+                            t._gsv2DividerLastDamageAt = e;
+                            const s = Math.max(0.8, 0.045 * t.health.max);
+                            t.health.amount -= s;
+                            t.shield &&
+                              t.shield.max > 0 &&
+                              (t.shield.amount = Math.max(
+                                0,
+                                t.shield.amount - 0.025 * t.shield.max
+                              ));
+                            if (t.health.amount <= 0) return void t.kill();
+                          }
+                        }
+                        if (i) return;
+                      }
                       if (
                         t.settings.goThruObstacle ||
                         "wall" === t.type ||
@@ -11002,28 +12558,34 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                               (t.y = e.y + i + t.size))
                             : (t.accel.x < 0 &&
                                 ((t.accel.x = 0), (t.velocity.x = 0)),
-                              (t.x = e.x + s + t.size)),
-                          p &&
-                            (t.godmode ||
-                              (t.settings.bounceOnObstacles ||
+                              (t.x = e.x + s + t.size));
+                          if (p && !t.godmode) {
+                            if (
+                              t.settings.bounceOnObstacles ||
                               ("bullet" !== t.type &&
                                 "swarm" !== t.type &&
                                 "trap" !== t.type &&
                                 ("food" !== t.type || t.isNestFood) &&
                                 "minion" !== t.type &&
                                 "drone" !== t.type)
-                                ? room.wallCollisions.push({
-                                    id: t.id,
-                                    justForceIt:
-                                      !(a || o || r || n) ||
-                                      y.isShorterThan(t.size),
-                                    left: (a && !r && !n) || (l && !d && !c),
-                                    right: (o && !r && !n) || (h && !d && !c),
-                                    top: (r && !a && !o) || (d && !l && !h),
-                                    bottom: (n && !a && !o) || (c && !l && !h),
-                                  })
-                                : t.kill()),
-                            t.collisionArray.push(e));
+                            ) {
+                              room.wallCollisions.push({
+                                id: t.id,
+                                justForceIt:
+                                  !(a || o || r || n) || y.isShorterThan(t.size),
+                                left: (a && !r && !n) || (l && !d && !c),
+                                right: (o && !r && !n) || (h && !d && !c),
+                                top: (r && !a && !o) || (d && !l && !h),
+                                bottom: (n && !a && !o) || (c && !l && !h),
+                              });
+                            } else {
+                              t.killedByWalls = !0;
+                              isProjectileDeathFadeEntity(t) &&
+                                (t.forceProjectileDeathFade = !0);
+                              t.kill();
+                            }
+                          }
+                          t.collisionArray.push(e);
                       })(e, t);
                     }
                     break;
@@ -11036,6 +12598,10 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     (a.hitsOwnTeam || o.hitsOwnTeam) &&
                     a.master.master.id !== o.master.master.id &&
                     o.master.master.id !== a.master.master.id:
+                    if (a.team === o.team && isTdmTeammateTank(a, o)) {
+                      softTeammateTankCollide(a, o);
+                      break;
+                    }
                     t(a, o, !0, !0);
                     break;
                   case "never" === a.settings.hitsOwnType ||
@@ -11054,8 +12620,10 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                         e(a, o);
                         break;
                       case "hardWithBuffer":
-                        a.master.id === o.master.id && e(a, o, 30);
-                        break;
+                          canSoftSubmerge(a, o)
+                            ? softSubmergeCollide(a, o)
+                            : a.master.id === o.master.id && e(a, o, 30);
+                          break;
                       case "spike":
                         !(function (e, t) {
                           let s = (1 + util.getDistance(e, t) / 2) * room.speed,
@@ -11072,9 +12640,15 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                         })(a, o);
                         break;
                       case "hardOnlyDrones":
-                        a.master.id === o.master.id && e(a, o);
-                        break;
+                          canSoftSubmerge(a, o)
+                            ? softSubmergeCollide(a, o)
+                            : a.master.id === o.master.id && e(a, o);
+                          break;
                       case "hardOnlyTanks":
+                        if (isTdmTeammateTank(a, o)) {
+                          softTeammateTankCollide(a, o);
+                          break;
+                        }
                         "tank" !== a.type ||
                           "tank" !== o.type ||
                           a.isDominator ||
@@ -11118,7 +12692,10 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               s &&
                 ("tank" !== e.type &&
                   "miniboss" !== e.type &&
-                  ((e.killedByWalls = !0), e.kill()),
+                  ((e.killedByWalls = !0),
+                  isProjectileDeathFadeEntity(e) &&
+                    (e.forceProjectileDeathFade = !0),
+                  e.kill()),
                 (e.health.amount -= 1.5),
                 e.health.amount <= 0 &&
                   ((e.invuln = e.passive = e.godmode = !1),
@@ -11232,24 +12809,30 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       maintainLoop = (() => {
         (placeObstacles = () => {
           if (room.modelMode) return;
+          if (c.GROWTH_TESTING) return;
+          if (["Maze", "Growth Maze", "Growth Maze TDM"].includes(c.serverName))
+            return;
           if ("Carrier Battle" === c.serverName) {
             const e = [Class.babyObstacle, Class.obstacle, Class.megaObstacle],
-              t = room.width / 100;
-            util.log("Spawning", t, "obstacles!");
-            for (let s = 0; s < t; s++) {
+              t = room.width / 100,
+              s = Number.isFinite(room._worldEditObstacleCount)
+                ? Math.max(0, Math.min(2e3, Math.round(room._worldEditObstacleCount)))
+                : Math.round(t);
+            util.log("Spawning", s, "obstacles!");
+            for (let i = 0; i < s; i++) {
               let t,
-                s = ran.choose(e),
-                i = 0;
+                a = ran.choose(e),
+                o = 0;
               do {
-                if (((t = room.randomType("norm")), i++, i > 200))
+                if (((t = room.randomType("norm")), o++, o > 200))
                   return util.warn("Failed to place obstacles!"), 0;
-              } while (dirtyCheck(t, 10 + s.SIZE));
-              let a = new Entity(t);
-              a.define(s),
-                (a.team = -101),
-                (a.facing = ran.randomAngle()),
-                a.protect(),
-                a.life();
+              } while (dirtyCheck(t, 10 + a.SIZE));
+              let r = new Entity(t);
+              r.define(a),
+                (r.team = -101),
+                (r.facing = ran.randomAngle()),
+                r.protect(),
+                r.life();
             }
             return;
           }
@@ -11279,17 +12862,39 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               room.ygrid /
               25e4 /
               1.5,
-            i = 0;
-          for (let s = Math.ceil(0.2 * t); s; s--)
+            i = 0,
+            a = [
+              Math.ceil(0.2 * t),
+              Math.ceil(t),
+              Math.ceil(0.4 * t),
+              Math.ceil(0.1 * s),
+              Math.ceil(0.2 * s),
+              Math.ceil(0.4 * s),
+            ],
+            o = a.reduce((e, t) => e + t, 0),
+            r = Number.isFinite(room._worldEditObstacleCount)
+              ? Math.max(0, Math.min(2e3, Math.round(room._worldEditObstacleCount)))
+              : o;
+          if (o > 0 && r !== o) {
+            const e = a.map((e) => (e / o) * r),
+              t = e.map((e) => Math.floor(e));
+            let s = r - t.reduce((e, t) => e + t, 0);
+            const i = e
+              .map((e, s) => ({ idx: s, fraction: e - t[s] }))
+              .sort((e, t) => t.fraction - e.fraction);
+            for (let e = 0; e < i.length && s > 0; e++, s--) t[i[e].idx]++;
+            for (let e = 0; e < a.length; e++) a[e] = t[e];
+          }
+          for (let s = a[0]; s; s--)
             i++, e("roid", Class.megaObstacle);
-          for (let s = Math.ceil(t); s; s--) i++, e("roid", Class.obstacle);
-          for (let s = Math.ceil(0.4 * t); s; s--)
+          for (let s = a[1]; s; s--) i++, e("roid", Class.obstacle);
+          for (let s = a[2]; s; s--)
             i++, e("roid", Class.babyObstacle);
-          for (let t = Math.ceil(0.1 * s); t; t--)
+          for (let t = a[3]; t; t--)
             i++, e("rock", Class.megaObstacle);
-          for (let t = Math.ceil(0.2 * s); t; t--)
+          for (let t = a[4]; t; t--)
             i++, e("rock", Class.obstacle);
-          for (let t = Math.ceil(0.4 * s); t; t--)
+          for (let t = a[5]; t; t--)
             i++, e("rock", Class.babyObstacle);
           util.log("Placed " + i + " obstacles.");
         }),
@@ -12197,18 +13802,20 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             if (!room.modelMode) {
               if ("tdm" === room.gameMode && c.DO_BASE_DAMAGE) {
                 for (let e = 1; e < room.teamAmount + 1; e++) {
-                  for (let t of room["bas" + e]) {
-                    let s = new Entity(t);
-                    s.define(Class.baseProtector),
-                      (s.team = -e),
-                      (s.color = [10, 12, 11, 15, 3, 35, 36, 0][e - 1]);
-                  }
-                  for (let t of room["bad" + e]) {
-                    let s = new Entity(t);
-                    s.define(Class.baseDroneSpawner),
-                      (s.team = -e),
-                      (s.color = [10, 12, 11, 15, 3, 35, 36, 0][e - 1]);
-                  }
+                  if (!c.GROWTH_SIEGE_V2)
+                    for (let t of room["bas" + e]) {
+                      let s = new Entity(t);
+                      s.define(Class.baseProtector),
+                        (s.team = -e),
+                        (s.color = [10, 12, 11, 15, 3, 35, 36, 0][e - 1]);
+                    }
+                  if (!c.GROWTH_SIEGE_V2)
+                    for (let t of room["bad" + e]) {
+                      let s = new Entity(t);
+                      s.define(Class.baseDroneSpawner),
+                        (s.team = -e),
+                        (s.color = [10, 12, 11, 15, 3, 35, 36, 0][e - 1]);
+                    }
                 }
                 if (
                   ("Carrier Battle" === c.serverName && c.SPAWN_DOMINATORS
@@ -12217,11 +13824,10 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                         c.SPAWN_DOMINATORS) &&
                       room.domi.length > 0 &&
                       dominatorLoop(),
+                  c.GROWTH_SIEGE_V2 && spawnGrowthSiegeV2Divider(),
+                  c.GROWTH_SIEGE_V2 && spawnGrowthSiegeV2PerimeterWalls(),
                   c.serverName.includes("Boss") &&
-                    bossRushLoop({
-                      x: Math.random() * room.width,
-                      y: Math.random() * room.height,
-                    }),
+                    bossRushLoop(),
                   c.serverName.includes("Mothership"))
                 )
                   for (let e = 1; e < room.teamAmount + 1; e++)
@@ -12240,6 +13846,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   if (
                     (room.modelMode ||
                       c.RANKED_BATTLE ||
+                      c.GROWTH_SIEGE_V2 ||
+                      c.GROWTH_TESTING ||
                       ((e) => {
                         if (
                           !room.modelMode &&
@@ -12340,7 +13948,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       })(t),
                     !room.arenaClosed && !room.modelMode && !c.RANKED_BATTLE)
                   ) {
-                    if ((e(t), room.maxBots > 0)) {
+                    if (((!c.GROWTH_TESTING && e(t)), room.maxBots > 0)) {
                       (bots = bots.filter((e) => e.isAlive())),
                         bots.length < room.maxBots && spawnBot();
                       for (let e of bots)
@@ -12352,6 +13960,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                         "None" !== e.sanctuaryType ||
                         "Sanctuary Boss" === e.miscIdentifier
                     );
+                    c.GROWTH_SIEGE_V2 && evaluateGrowthSiegeV2DefeatState();
                   }
                 }
               );
@@ -12554,7 +14163,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             );
           })();
         return () => {
-          room.modelMode || ("Carrier Battle" !== c.serverName && s(), t());
+          room.modelMode ||
+            ("Carrier Battle" !== c.serverName &&
+              !c.GROWTH_SIEGE_V2 &&
+              !c.GROWTH_TESTING &&
+              s(),
+            t());
         };
       })(),
       speedCheckLoop = (() => {
@@ -14972,3 +16586,14 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             new RankedRoom(e));
         }, 500);
   })();
+
+
+
+
+
+
+
+
+
+
+

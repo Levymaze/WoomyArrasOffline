@@ -519,6 +519,32 @@ const applyGrowthDefaults = (cfg) => {
     cfg.BOTS = Math.max(24, Number(cfg.BOTS || 0));
     return cfg;
 };
+const createGrowthTestingRoomSetup = (roomSetup, xGrid, yGrid) => {
+    const rows = Array.isArray(roomSetup) && roomSetup.length
+        ? roomSetup.length
+        : Math.max(1, Number(yGrid || 18));
+    const cols = Array.isArray(roomSetup) && Array.isArray(roomSetup[0]) && roomSetup[0].length
+        ? roomSetup[0].length
+        : Math.max(1, Number(xGrid || 18));
+    return Array.from({ length: rows }, () => Array.from({ length: cols }, () => "norm"));
+};
+const createGrowthSiegeV2RoomSetup = () => {
+    const size = 17;
+    const map = Array.from({ length: size }, () =>
+        Array.from({ length: size }, () => "norm")
+    );
+    const dividerX = 4;
+    for (let y = 0; y < size; y++) map[y][dividerX] = "gsv2line";
+    for (let y = 4; y <= 12; y++)
+        for (let x = 1; x <= 2; x++) map[y][x] = "spn2";
+    const dominatorRows = [2, 6, 10, 14];
+    const dominatorX = 13;
+    for (const y of dominatorRows) map[y][dominatorX] = "domi";
+    for (let y = 1; y < size - 1; y++)
+        for (let x = 11; x <= 15; x++) map[y][x] = "spn1";
+    for (const y of dominatorRows) map[y][dominatorX] = "domi";
+    return map;
+};
 const growthBaseMode =
     modes.find((entry => entry[1] && entry[1].serverName === "Free For All")) ||
     modes.find((entry => entry[1] && "ffa" === entry[1].MODE)) ||
@@ -528,6 +554,34 @@ if (growthBaseMode) {
     growthConfig.serverName = "Growth";
     growthConfig.MODE = "ffa";
     modes.push(["growth", growthConfig]);
+
+    const growthTestingConfig = applyGrowthDefaults(cloneModeConfig(growthBaseMode));
+    const baseWidth = Number(growthTestingConfig.WIDTH || 6500);
+    const baseHeight = Number(growthTestingConfig.HEIGHT || 6500);
+    growthTestingConfig.serverName = "Growth Testing";
+    growthTestingConfig.MODE = "ffa";
+    growthTestingConfig.WIDTH = Math.max(500, Math.round(baseWidth * 0.5));
+    growthTestingConfig.HEIGHT = Math.max(500, Math.round(baseHeight * 0.5));
+    growthTestingConfig.ROOM_SETUP = createGrowthTestingRoomSetup(
+        growthTestingConfig.ROOM_SETUP,
+        growthTestingConfig.X_GRID,
+        growthTestingConfig.Y_GRID
+    );
+    growthTestingConfig.X_GRID = growthTestingConfig.ROOM_SETUP[0].length;
+    growthTestingConfig.Y_GRID = growthTestingConfig.ROOM_SETUP.length;
+    growthTestingConfig.BOTS = 0;
+    growthTestingConfig.FOOD_AMOUNT = 0;
+    growthTestingConfig.FOOD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    growthTestingConfig.FOOD_NEST = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    growthTestingConfig.MAZE = Object.assign({}, growthTestingConfig.MAZE || {}, {
+        ENABLED: false,
+    });
+    growthTestingConfig.PORTALS = Object.assign({}, growthTestingConfig.PORTALS || {}, {
+        ENABLED: false,
+    });
+    growthTestingConfig.SPAWN_DOMINATORS = false;
+    growthTestingConfig.GROWTH_TESTING = true;
+    modes.push(["growthtesting", growthTestingConfig]);
 }
 const bossBaseMode = modes.find((entry) => entry[0] === "boss");
 if (bossBaseMode) {
@@ -536,6 +590,23 @@ if (bossBaseMode) {
     modes.push(["growthboss", growthBossConfig]);
     modes.push(["growthsiege", JSON.parse(JSON.stringify(growthBossConfig))]);
     modes.push(["growthseige", JSON.parse(JSON.stringify(growthBossConfig))]);
+    const growthBossV2Config = applyGrowthDefaults(cloneModeConfig(bossBaseMode));
+    const originalWidth = Number(growthBossV2Config.WIDTH || 6500);
+    const originalHeight = Number(growthBossV2Config.HEIGHT || 6500);
+    growthBossV2Config.serverName = "Growth Siege V2 (Boss Rush)";
+    growthBossV2Config.WIDTH = Math.round(originalWidth * 0.6);
+    growthBossV2Config.HEIGHT = Math.round(originalHeight * 0.6);
+    growthBossV2Config.ROOM_SETUP = createGrowthSiegeV2RoomSetup();
+    growthBossV2Config.X_GRID = growthBossV2Config.ROOM_SETUP[0].length;
+    growthBossV2Config.Y_GRID = growthBossV2Config.ROOM_SETUP.length;
+    growthBossV2Config.BOTS = 10;
+    growthBossV2Config.FOOD_AMOUNT = 0;
+    growthBossV2Config.FOOD = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    growthBossV2Config.FOOD_NEST = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    growthBossV2Config.SPAWN_DOMINATORS = true;
+    growthBossV2Config.GROWTH_SIEGE_V2 = true;
+    modes.push(["growthbossv2", growthBossV2Config]);
+    modes.push(["growthsiegenew", JSON.parse(JSON.stringify(growthBossV2Config))]);
 }
 const mazeBaseMode =
     modes.find(
@@ -563,6 +634,20 @@ if (tdmBaseMode) {
     growthTdmConfig.MODE = "tdm";
     growthTdmConfig.TEAM_AMOUNT = Math.max(2, Number(growthTdmConfig.TEAM_AMOUNT || 0));
     modes.push(["growthtdm", growthTdmConfig]);
+
+    const cornerBaseTdmMode =
+        modes.find((entry) => entry[0] === "4tdm") || tdmBaseMode;
+    const growthMazeTdmConfig = applyGrowthDefaults(cloneModeConfig(cornerBaseTdmMode));
+    growthMazeTdmConfig.serverName = "Growth Maze TDM";
+    growthMazeTdmConfig.MODE = "tdm";
+    growthMazeTdmConfig.TEAM_AMOUNT = Math.max(
+        4,
+        Number(growthMazeTdmConfig.TEAM_AMOUNT || 0)
+    );
+    growthMazeTdmConfig.MAZE = Object.assign({}, growthMazeTdmConfig.MAZE || {}, {
+        ENABLED: true,
+    });
+    modes.push(["growthmazetdm", growthMazeTdmConfig]);
 }
 for(let mode of modes){
     module.exports("config-"+mode[0], mode[1])

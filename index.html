@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html id=mainBody lang=en>
-<script src="js/01-websocket-polyfill.js"></script><script src="js/02-process-polyfill.js"></script><script src="js/03-require-polyfill.js"></script><script src="js/04-globals-polyfill.js"></script><script src="js/05-defs-export.js"></script><script src="js/06-boot-origin.js"></script><script src="js/07-mockup-polyfill.js"></script><script src="js/08-part.js"></script><script src="js/09-part.js"></script><script src="js/10-part.js"></script><script src="js/11-part.js"></script><script src="js/12-part.js"></script><script src="js/13-part.js"></script><script src="js/14-part.js"></script><script src="js/15-part.js"></script><script src="js/16-part.js"></script><script src="js/17-part.js"></script><script src="js/18-part.js"></script><script src="js/19-part.js"></script><script src="js/20-part.js"></script><script src="js/21-part.js"></script><script src="js/22-part.js"></script>
+<script src="js/01-websocket-polyfill.js"></script><script src="js/02-process-polyfill.js"></script><script src="js/03-require-polyfill.js"></script><script src="js/04-globals-polyfill.js"></script><script src="js/05-defs-export.js"></script><script src="js/06-boot-origin.js"></script><script src="js/07-mockup-polyfill.js"></script><script src="js/08-part.js"></script><script src="js/09-part.js"></script><script src="js/10-part.js"></script><script src="js/11-part.js"></script><script src="js/12-part.js"></script><script src="js/13-part.js"></script><script src="js/14-part.js"></script><script src="js/15-part.js"></script><script src="js/16-part.js"></script><script src="js/17-part.js"></script><script src="js/18-part.js"></script><script src="js/19-part.js"></script><script src="js/20-part.js?v=20260223c"></script><script src="js/21-part.js"></script><script src="js/22-part.js"></script>
 			<script src="js/23-part.js"></script><script src="js/24-part.js"></script><script src="js/25-part.js"></script><script src="js/26-tokens.js"></script><script src="js/27-tankgen-results.js"></script><meta charset=UTF-8><meta content="no-cache, no-store, must-revalidate"http-equiv=Cache-Control><meta content=no-cache http-equiv=Pragma><meta content=0 http-equiv=Expires><title>Woomy-Arras.io</title><meta content="width=device-width,initial-scale=1,maximum-scale=5,minimum-scale=1"name=viewport><meta content="A restored version of the old io game called Woomy-Arras."name=description><meta content="index, follow"name=robots><meta content=52 property=og:image:width><meta content=52 property=og:image:height>
 <style>
   * {
@@ -627,11 +627,15 @@
 
   .playerInputsContainer {
     width: 85%;
-    height: 50%
+    height: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start
   }
 
   .playerInputsContainer>* {
-    margin: 1%
+    margin: 0.4vw 0
   }
 
   .playerButton {
@@ -658,6 +662,23 @@
     transform: scale(1);
     filter: brightness(.95);
     text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  #startButton {
+    display: block;
+    width: 50%;
+    margin-top: .8vw
+  }
+
+  #teamSelectButton {
+    display: none;
+    width: 42%;
+    height: auto;
+    min-height: 1.9em;
+    padding: .35vw .6vw;
+    margin-top: .2vw;
+    font-size: clamp(12px, 1.05vw, 18px);
+    line-height: 1.2
   }
 
   .playerInput {
@@ -880,9 +901,12 @@
 			  <option value=twfr disabled>Trench Warfare (broken)
               <option value=menuSectionGrowth disabled>--- GROWTH MODES ---
               <option value=growth>Growth (FFA)
+              <option value=growthtesting>Growth Testing (FFA)
               <option value=growthmaze>Growth Maze (FFA)
               <option value=growthtdm>Growth TDM
+              <option value=growthmazetdm>Growth Maze TDM
               <option value=growthboss>Growth Siege (Boss Rush)
+              <option value=growthbossv2>Growth Siege V2 (Boss Rush)
               <option value=menuSection2 disabled>--- TDM ---
               <option value=2dom>2TDM Domination
               <option value=2mot>2TDM Mothership
@@ -914,6 +938,7 @@
             <input class=playerInput id=playerNameInput placeholder=Name>
             <input class=playerInput id=playerKeyInput placeholder=Token type=password>
             <button id=startButton class=playerButton>Play</button>
+            <button id=teamSelectButton class=playerButton>Team: Auto</button>
           </div>
         </div>
         <div class="miniWrapper patchNotesHolder">
@@ -957,7 +982,7 @@
       </div>
     </div>
   </div>
-  <script src="js/31-token-logic.js"></script><script src="js/32-mockup-polyfill.js"></script><script src="js/33-part.js"></script>
+  <script src="js/31-token-logic.js?v=20260223c"></script><script src="js/32-mockup-polyfill.js?v=20260223c"></script><script src="js/33-part.js"></script>
 
 
 

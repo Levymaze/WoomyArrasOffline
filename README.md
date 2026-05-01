@@ -78,10 +78,10 @@ These tools are mainly meant for development and sandbox testing.
 
 ### Tank Additions and Combat Updates
 
-- Added two tanks: `Wrench` and `Spanner`.
+- Added tanks: `Wrench` and `Spanner`.
 - Added upgrade path: `Basic -> Flank Guard -> Auto-3 -> Wrench / Spanner`.
-- Added `Top Banana` as a factory-line upgrade and placed it in the tier route:
-  - `Basic -> Director -> Spawner -> Factory -> Top Banana`
+- Added `Top Banana` as a factory/MegaSpawner upgrade and placed it in the tier route:
+  - `Basic -> Director -> Spawner -> Mega Spawner/Factory -> Top Banana`
 - Added `Ultra Spawner` as a playable Spawner-line tank with its own class setup and 4 minion cap.
 - Added `Mega Spawner` as the tier-4 bridge in the Director/Spawner route.
 - Updated the Director drone branch routing to:

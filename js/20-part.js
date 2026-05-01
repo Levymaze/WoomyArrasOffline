@@ -1,4 +1,4 @@
-const teams = (Math.random() * 3 | 0) + 2;
+const teams = 3;
             const mapType = (Math.random() * 4) | 0;
             module.exports("mazetdm", {
                 "MODE": "tdm",

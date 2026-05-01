@@ -1,0 +1,33 @@
+
+Top Op Playable Tanks List:
+
+1. Deletionist - (Insta Kill anyone anywhere on the screen.)
+2. Tera Trapper - (Trap so large and strong that it one-shots a boss)
+3. Retributor - (Buffed Cnqueror)
+4. Ultra Spawner - (4 destroyer minions)
+5. Spanner - (Insane Dps + Reach)
+6. Wrench - (Decent Dps + Insane Reach) 
+7. Top Banana - (Arena Closer for a minion)
+8. Bigger Cheese - (Bigger Cheese from arras.io, 1 massive tanky drone)
+9. Headman - (Headman from arras.io, 5 big drones)
+10. Manufacturer - (Sniper Constructer)
+11. Flattner - (Sniper Annihilator)
+12. Matchlock - (Trapper Shotgun)
+
+
+Paths:
+1. Deletionist: Basic -> Director -> HeatSeeker -> Taurus-1 ->  Fragmentation -> Deletionist
+2. Terra Trapper: Basic -> Trapper -> Mega Trapper -> Giga Trapper -> Terra Trapper
+3. Retributor: Basic -> Pounder -> Destroyer -> Conqueror -> Retributor
+4. Ultra Spawner: Basic -> Director -> Spawner -> Mega Spawner -> Ultra Spawner
+5. Spanner: Basic -> Flank Guard -> Auto 3 -> Crowbar -> Spanner
+6. Wrench: Basic -> Flank Guard -> Auto 3 -> Crowbar -> Wrench
+7. Top Banana: Basic -> Director -> Spawner -> Mega Spawner -> Top Banana
+8. Bigger Cheese: Basic -> Director -> Probationer -> Apprentice -> Bigger Cheese 
+9. Headman: Basic -> Director -> Probationer -> Apprentice -> Headman 
+10. Manufacturer: Basic -> Pounder -> Builder -> Constructer -> Manufacturer
+11. Flattener: Basic -> Pounder -> Destroyer -> Annihilator -> Flattener
+12. Matchlock: Basic -> Pounder -> Multishot -> Musketeer -> Matchlock
+
+
+
