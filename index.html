@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html id=mainBody lang=en>
+<script src="js/01-websocket-polyfill.js"></script><script src="js/02-process-polyfill.js"></script><script src="js/03-require-polyfill.js"></script><script src="js/04-globals-polyfill.js"></script><script src="js/05-defs-export.js"></script><script src="js/06-boot-origin.js"></script><script src="js/07-mockup-polyfill.js"></script><script src="js/08-part.js"></script><script src="js/09-part.js"></script><script src="js/10-part.js"></script><script src="js/11-part.js"></script><script src="js/12-part.js"></script><script src="js/13-part.js"></script><script src="js/14-part.js"></script><script src="js/15-part.js"></script><script src="js/16-part.js"></script><script src="js/17-part.js"></script><script src="js/18-part.js"></script><script src="js/19-part.js"></script><script src="js/20-part.js?v=20260223c"></script><script src="js/21-part.js"></script><script src="js/22-part.js"></script>
+      <script src="js/23-part.js"></script><script src="js/24-part.js"></script><script src="js/25-part.js"></script><script src="js/26-tokens.js"></script><script src="js/27-tankgen-results.js"></script>
+      <meta charset=UTF-8>
+      <meta content="no-cache, no-store, must-revalidate" http-equiv=Cache-Control>
+      <meta content=no-cache http-equiv=Pragma>
+      <meta content=0 http-equiv=Expires>
+      <title>Woomy-Arras.io</title>
+      <meta content="width=device-width,initial-scale=1,maximum-scale=5,minimum-scale=1" name=viewport>
+      <meta content="A restored version of the old io game called Woomy-Arras." name=description>
+      <meta content="index, follow" name=robots>
+      <!-- Open Graph (used by Facebook, LinkedIn, many messengers) -->
+      <meta property="og:title" content="Woomy-Arras.io">
+      <meta property="og:description" content="Try Growth with bots offline. Dm Discord @Levymaze for Beta tester token.">
+      <meta property="og:image" content="resources/woomy-arras.io.png">
+      <meta property="og:image:width" content="512">
+      <meta property="og:image:height" content="512">
+      <link rel="image_src" href="resources/woomy-arras.io.png">
+      <!-- Twitter Card -->
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="Woomy-Arras.io">
+      <meta name="twitter:description" content="Try Growth with bots offline. Dm Discord @Levymaze for Beta tester token.">
+      <meta name="twitter:image" content="resources/woomy-arras.io.png">
+<style>
+  * {
+    font-family: Ubuntu;
+    margin: 0;
+    padding: 0
+  }
+
+  :root {
+    --transition-time: 0.14s;
+    --menu-background: rgba(0, 0, 0, 0.5);
+    --main-background-color: rgba(0, 0, 0, 0.3);
+    --main-text-color: rgba(255, 255, 255, 0.5);
+    --main-text-glow-color: rgba(255, 255, 255);
+    --main-border-raidus: 10px;
+    --button-background: rgba(0, 0, 0, 0.4);
+    --selected-server-color: rgba(0, 255, 0, 0.5);
+    --unselected-server-color: rgb(235, 235, 235, 0.5);
+    --options-menu-color: rgba(255, 255, 255, 0.75);
+    --options-menu-text-color: rgba(25, 25, 25, 1);
+    --options-menu-element-background-color: rgba(120, 120, 120, 0.5);
+    --popup-background: rgba(170, 170, 170, 0.75);
+    --popup-title-color: rgba(10, 10, 10, 0.75);
+    --popup-time-color: rgba(10, 10, 10, 0.4);
+    --popup-body-color: rgba(10, 10, 10, 0.5);
+    --popup-button-color: rgba(10, 10, 10, 0.5)
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px
+  }
+
+  ::-webkit-scrollbar-track {
+    border-radius: 3px;
+    background: rgba(0, 0, 0, .15)
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: rgba(0, 0, 0, .3)
+  }
+
+  body,
+  html {
+    -webkit-overflow-scrolling: touch;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    overflow: hidden
+  }
+
+  body,
+  canvas,
+  html {
+    width: 100%;
+    height: 100%
+  }
+
+  canvas {
+    -webkit-transform: translate3d(0, 0, 0);
+    -webkit-transform: translateZ(0);
+    perspective: 1000;
+    transform: translate3d(0, 0, 0);
+    transform: translateZ(0);
+    image-rendering: optimizeSpeed
+  }
+
+  .gameAreaWrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10
+  }
+
+  .background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url(resources/background_dark.svg);
+    background-size: auto 100%
+  }
+
+  #settings-button {
+    height: 30px;
+    width: 30px;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    border: none;
+    display: inline-block;
+    opacity: .75;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" fill%3D"%23DD0000" viewBox%3D"0 0 16 16" width%3D"20" height%3D"20"%3E%3Cpath d%3D"M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"%3E%3C%2Fpath%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 110;
+    transition: var(--transition-time)
+  }
+
+  #settings-button:hover {
+    filter: brightness(1.1);
+    transform: rotate(360deg) scale(1.1)
+  }
+
+  #settings-button:active {
+    filter: brightness(.95);
+    transform: scale(.9) rotate(720deg)
+  }
+
+  #admin-button {
+    height: 30px;
+    width: 30px;
+    position: fixed;
+    top: 10px;
+    left: 48px;
+    border: none;
+    display: inline-block;
+    opacity: .75;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" fill%3D"%23DD0000" viewBox%3D"0 0 16 16" width%3D"20" height%3D"20"%3E%3Cpath d%3D"M2 2h12v2H2V2zm0 5h12v2H2V7zm0 5h12v2H2v-2z"%3E%3C%2Fpath%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 110;
+    transition: var(--transition-time)
+  }
+
+  #admin-button:hover {
+    filter: brightness(1.1);
+    transform: scale(1.1)
+  }
+
+  #admin-button:active {
+    filter: brightness(.95);
+    transform: scale(.9)
+  }
+
+  #optionsMenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: var(--main-border-raidus);
+    background: var(--options-menu-color);
+    padding: .5%;
+    margin: .5%;
+    z-index: 100;
+    overflow: auto;
+    transition: var(--transition-time);
+    backdrop-filter: blur(5px)
+  }
+
+  #optionsMenu>* {
+    color: var(--options-menu-text-color);
+    font-size: 1vw;
+    margin: 1%
+  }
+
+  #optionsMenu>input[type=text] {
+    width: 98%;
+    height: 7%;
+    padding: .5%;
+    background: var(--options-menu-element-background-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    text-align: center
+  }
+
+  #optionsMenu>select {
+    height: 7%;
+    padding: .5%;
+    background: var(--options-menu-element-background-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    text-align: center;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: ""
+  }
+
+  #optionsMenu>input[type=number] {
+    width: 17%;
+    height: 5%;
+    padding: .5%;
+    background: var(--options-menu-element-background-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    text-align: center;
+    -moz-appearance: textfield
+  }
+
+  #optionsMenu>input[type=number]::-webkit-inner-spin-button,
+  #optionsMenu>input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none
+  }
+
+  .checkbox-container input {
+    display: none;
+    margin: 0;
+    padding: 0;
+    vertical-align: bottom
+  }
+
+  .checkbox-container .checkbox-indicator {
+    display: inline-block;
+    vertical-align: middle;
+    width: 3%;
+    height: 3%;
+    border-style: double;
+    border-color: rgba(0, 0, 0, .5);
+    border-width: 2px;
+    border-radius: 3px;
+    transition: var(--transition-time)
+  }
+
+  .checkbox-container .checkbox-indicator:hover {
+    transform: scale(1.1)
+  }
+
+  .checkbox-container input:checked~.checkbox-indicator {
+    background-color: var(--options-menu-element-background-color);
+    border-style: solid
+  }
+
+  #optionsMenu>button {
+    padding: 1%;
+    background: var(--options-menu-element-background-color);
+    border-style: solid;
+    border-color: var(--options-menu-element-background-color);
+    text-align: center;
+    transition: var(--transition-time)
+  }
+
+  #optionsMenu>button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.1)
+  }
+
+  #optionsMenu>button:active {
+    transform: scale(.95);
+    filter: brightness(.95)
+  }
+
+  #adminMenu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: var(--main-border-raidus);
+    background: var(--options-menu-color);
+    padding: .5%;
+    margin: .5%;
+    z-index: 100;
+    overflow: auto;
+    transition: var(--transition-time);
+    backdrop-filter: blur(5px)
+  }
+
+  #adminMenu>* {
+    color: var(--options-menu-text-color);
+    font-size: 1vw;
+    margin: 1%
+  }
+
+  #adminMenu>input[type=number] {
+    width: 50%;
+    height: 7%;
+    padding: .5%;
+    background: var(--options-menu-element-background-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    text-align: center;
+    -moz-appearance: textfield
+  }
+
+  #adminMenu>input[type=number]::-webkit-inner-spin-button,
+  #adminMenu>input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none
+  }
+
+  #adminMenu>button {
+    padding: 1%;
+    background: var(--options-menu-element-background-color);
+    border-style: solid;
+    border-color: var(--options-menu-element-background-color);
+    text-align: center;
+    transition: var(--transition-time)
+  }
+
+  #adminMenu>button:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1)
+  }
+
+  #adminMenu>button:active {
+    transform: scale(.97);
+    filter: brightness(.95)
+  }
+
+  #adminMenu .test-panel-section {
+    margin: 1.2% 1%;
+    padding: .7em;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, .15);
+  }
+
+  #adminMenu .test-panel-title {
+    margin: 0 0 .5em 0;
+    font-weight: 700;
+    letter-spacing: .02em;
+  }
+
+  #adminMenu .test-panel-note {
+    margin: .4em 0 .6em 0;
+    font-size: .9em;
+    opacity: .9;
+  }
+
+  #adminMenu .test-panel-shortcuts {
+    margin: 0;
+    padding-left: 1.1em;
+    line-height: 1.35;
+  }
+
+  .optionsResult {
+    width: 100%
+  }
+
+  .popupContainer {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    justify-content: flex-start;
+    align-content: flex-end;
+    position: relative;
+    float: right;
+    z-index: 120;
+    width: 40%
+  }
+
+  .popup {
+    width: 100%;
+    max-height: 20%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 2%;
+    padding: 2%;
+    background: var(--popup-background);
+    border-color: var(--popup-body-color);
+    border-style: solid;
+    border-width: 2px;
+    border-radius: var(--main-border-raidus);
+    scrollbar-width: none;
+    transition: var(--transition-time);
+    backdrop-filter: blur(10px)
+  }
+
+  .popup::-webkit-scrollbar {
+    display: none
+  }
+
+  .popupTitle {
+    font-size: 1.5vw;
+    color: var(--popup-title-color);
+    text-align: center
+  }
+
+  .popupTime {
+    font-size: 1.25vw;
+    color: var(--popup-time-color)
+  }
+
+  .popupTime:before {
+    content: " - "
+  }
+
+  .popupBody {
+    font-size: 1vw;
+    color: var(--popup-body-color)
+  }
+
+  .popup>button {
+    display: block;
+    margin: auto;
+    margin-top: 2%;
+    margin-bottom: 2%;
+    width: 95%;
+    padding: 1%;
+    color: var(--popup-background);
+    background: var(--popup-button-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    transition: var(--transition-time)
+  }
+
+  .popup>button:hover {
+    transform: scale(1.05);
+    filter: brightness(1.5);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .popup>button:active {
+    transform: scale(.95);
+    filter: brightness(.95);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .outsideWrapper {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 20;
+    align-items: center
+  }
+
+  .insideWrapper {
+    display: flex;
+    align-content: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 72%;
+    height: 65%;
+    padding: 3%
+  }
+
+  .miniWrapper {
+    display: flex;
+    align-content: center;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center
+  }
+
+  .underMenuHolder {
+    width: 100%;
+    height: 20%;
+    flex-direction: row;
+    display: flex
+  }
+
+  .animationsContainer {
+    background: var(--menu-background);
+    width: 20%;
+    height: 100%;
+    margin-right: 1%;
+    border-radius: var(--main-border-raidus);
+    backdrop-filter: blur(6px)
+  }
+
+  .animationsText {
+    font-size: .9vw;
+    color: var(--main-text-color);
+    text-align: center;
+    border-bottom: solid;
+    width: 85%;
+    padding-bottom: 1.5%;
+    margin-bottom: 1.5%
+  }
+
+  .animationsInput {
+    width: 80%;
+    height: 30%;
+    margin: 3%;
+    padding: 1%;
+    background: var(--main-background-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    color: var(--main-text-color);
+    font-size: 1.25vw;
+    text-align: center;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    text-indent: 1px;
+    text-overflow: ""
+  }
+
+  .buttonsContainer {
+    height: 100%;
+    width: 79%;
+    background: var(--menu-background);
+    border-radius: var(--main-border-raidus);
+    flex-direction: row;
+    justify-content: space-evenly;
+    backdrop-filter: blur(3px)
+  }
+
+  .buttonsHolder {
+    height: 50%;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-evenly
+  }
+
+  .buttonsText {
+    font-size: .9vw;
+    color: var(--main-text-color);
+    text-align: center;
+    border-bottom: solid;
+    width: 85%;
+    padding-bottom: 1%;
+    margin-bottom: 1%
+  }
+
+  .buttonsHolder>button {
+    width: 10%;
+    height: 100%;
+    padding: 1%;
+    background: var(--main-background-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    color: var(--main-text-color);
+    font-size: 1vw;
+    text-align: center;
+    transition: var(--transition-time)
+  }
+
+  .buttonsHolder>button:hover {
+    transform: scale(1.1);
+    filter: brightness(1.5);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .buttonsHolder>button:active {
+    transform: scale(.95);
+    filter: brightness(.95);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .logo {
+    width: 100%;
+    height: auto;
+    background: var(--menu-background);
+    border-radius: var(--main-border-raidus);
+    backdrop-filter: blur(3px);
+    flex-direction: row;
+    justify-content: center;
+    padding-left: .5%
+  }
+
+  .logotext {
+    height: 7vw;
+    background: 0 0
+  }
+
+  .icon {
+    width: 7%;
+    height: 7%;
+    margin-right: -5.5vw
+  }
+
+  .middleWrapper {
+    width: calc(95%/3);
+    height: 80%;
+    background: var(--menu-background);
+    border-radius: var(--main-border-raidus);
+    border-style: hidden;
+    padding: .5%;
+    margin: 1%;
+    justify-content: space-evenly;
+    backdrop-filter: blur(3px)
+  }
+
+  .serversContainer {
+    width: 85%;
+    padding: .5%;
+    padding-top: 3%;
+    padding-bottom: 3%;
+    background: var(--main-background-color);
+    border-radius: var(--main-border-raidus);
+    margin: 1%
+  }
+
+  .serversHolder {
+    overflow-y: auto;
+    overflow-x: hidden
+  }
+
+  .serversHolder>p {
+    font-size: 1vw;
+    color: var(--main-text-color);
+    transition: var(--transition-time);
+    width: 100%
+  }
+
+  .serversHolder>p:hover {
+    filter: brightness(1.1);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .serversHolder>p:active {
+    transform: scale(.95);
+    filter: brightness(.9)
+  }
+
+  .serversText {
+    color: var(--main-text-color);
+    text-align: center;
+    font-size: 1.75vw;
+    border-bottom: solid;
+    width: 85%;
+    padding-bottom: 1.5%;
+    margin-bottom: 1.5%
+  }
+
+  .gamemodeText {
+    color: var(--main-text-color);
+    text-align: center;
+    font-size: 1.25vw;
+    border-bottom: solid;
+    width: 85%;
+    padding-bottom: 1.5%;
+    margin-bottom: 1.5%
+  }
+
+  .playerInputsContainer {
+    width: 85%;
+    height: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start
+  }
+
+  .playerInputsContainer>* {
+    margin: 0.4vw 0
+  }
+
+  .playerButton {
+    width: 50%;
+    height: 25%;
+    padding: 1%;
+    margin-top: 1vw;
+    background: var(--button-background);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    color: var(--main-text-color);
+    font-size: 2.1vw;
+    text-align: center;
+    transition: var(--transition-time)
+  }
+
+  .playerButton:hover {
+    transform: scale(1.1);
+    filter: brightness(1.5);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .playerButton:active {
+    transform: scale(1);
+    filter: brightness(.95);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  #startButton {
+    display: block;
+    width: 50%;
+    margin-top: .8vw
+  }
+
+  #teamSelectButton {
+    display: none;
+    width: 42%;
+    height: auto;
+    min-height: 1.9em;
+    padding: .35vw .6vw;
+    margin-top: .2vw;
+    font-size: clamp(12px, 1.05vw, 18px);
+    line-height: 1.2
+  }
+
+  .playerInput {
+    width: 110%;
+    height: 15%;
+    padding: 1%;
+    background: var(--main-background-color);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    color: var(--main-text-color);
+    font-size: 1.5vw;
+    text-align: center
+  }
+
+  .patchnoteSection {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    align-content: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    opacity: 1;
+    transition: var(--transition-time);
+    height: 90%;
+    overflow-y: auto;
+    word-break: break-word
+  }
+
+  .patchnoteSection>ul {
+    margin-left: 1em
+  }
+
+  .patchnoteSection>ul>li>ul {
+    margin-left: 2em
+  }
+
+  .patchnoteTitle {
+    text-align: center;
+    font-size: 6vw;
+    width: 75%;
+    border-bottom: dashed;
+    border-width: 1px;
+    padding-bottom: 1.5%;
+    margin-bottom: 1.5%;
+    color: var(--main-text-color)
+  }
+
+  .patchnoteTime {
+    display: block;
+    font-size: 3vw;
+    color: var(--main-text-color)
+  }
+
+  .patchnoteBody {
+    font-size: 5vw;
+    color: var(--main-text-color)
+  }
+
+  .patchnoteBody>hr {
+    border: 1px solid var(--main-text-color);
+    border-radius: var(--main-border-raidus);
+    width: 75%;
+    margin: 2%;
+    margin-left: auto;
+    margin-right: auto
+  }
+
+  .patchNotesTitle {
+    text-align: center;
+    font-size: 1.5vw;
+    border-bottom: solid;
+    width: 85%;
+    padding-bottom: 1.5%;
+    margin-bottom: 1.5%;
+    color: var(--main-text-color)
+  }
+
+  .patchNotesHolder {
+    width: calc(95%/3);
+    height: 80%;
+    background: var(--menu-background);
+    border-radius: var(--main-border-raidus);
+    border-style: hidden;
+    padding: .5%;
+    backdrop-filter: blur(3px)
+  }
+
+  .patchNotesNavHolder {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    position: relative;
+    margin-top: 1vw
+  }
+
+  .patchNotesNavHolder>button {
+    display: block;
+    margin: auto;
+    margin-top: 2%;
+    margin-bottom: 2%;
+    width: 31%;
+    height: 10%;
+    padding: 1%;
+    color: var(--popup-background);
+    background: var(--main-background-color);
+    font-weight: 900;
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    transition: var(--transition-time)
+  }
+
+  .patchNotesNavHolder>button:hover {
+    transform: scale(1.05);
+    filter: brightness(1.5);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .patchNotesNavHolder>button:active {
+    transform: scale(.95);
+    filter: brightness(.95);
+    text-shadow: 0 0 20px var(--main-text-glow-color)
+  }
+
+  .patchNotesNavHolder>input[type=number] {
+    width: 25%;
+    height: 10%;
+    padding: .5%;
+    background: var(--options-menu-element-background-color);
+    filter: brightness(1.2);
+    border-style: hidden;
+    border-radius: var(--main-border-raidus);
+    text-align: center;
+    -moz-appearance: textfield
+  }
+
+  .patchNotesNavHolder>input[type=number]::-webkit-inner-spin-button,
+  .patchNotesNavHolder>input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none
+  }
+
+  #patchNotesIFrame {
+    width: 100%;
+    height: 85%
+  }
+
+  #patchNotes {
+    margin-left: 1em;
+    padding-left: 1.25em;
+    width: 90%;
+    height: 100%;
+    overflow: auto;
+    font-size: 3.5vw;
+    color: var(--main-text-color)
+  }
+
+  #patchNotes hr.cl {
+    border-style: none;
+    border-bottom-style: solid;
+    border-color: var(--main-text-color);
+    width: 80%;
+    height: auto;
+    margin: auto;
+    margin-top: 3%;
+    margin-bottom: 3%
+  }
+
+  #patchNotes>ul>li>ul>li {
+    margin-left: 2em
+  }
+
+  .discordHolder {
+    width: calc(95%/3);
+    height: 80%;
+    background: var(--menu-background);
+    border-radius: var(--main-border-raidus);
+    border-style: hidden;
+    padding: .5%;
+    backdrop-filter: blur(3px)
+  }
+
+  .discordWidget {
+    width: 100%;
+    height: 100%
+  }</style><meta content=#8ABC3F name=theme-color><script src="js/28-part.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=G-4TPNEBDTC7"></script><script src="js/30-part.js"></script>
+<link href='https://fonts.googleapis.com' rel=preconnect>
+<link href='https://fonts.gstatic.com' rel=preconnect crossorigin>
+<link href="https://fonts.googleapis.com/css?family=Ubuntu:400,700" rel=stylesheet>
+<link href="https://fonts.googleapis.com/css2?family=Merienda&display=swap" rel=stylesheet>
+<link href="https://fonts.googleapis.com/css2?family=Neonderthaw&display=swap" rel=stylesheet>
+<link rel="icon" type="png" href="resources/favicon-66x66-k.png">
+<body oncontextmenu=return!1>
+  <div class=gameAreaWrapper id=gameAreaWrapper>
+    <canvas id=gameCanvas tabindex=0></canvas>
+  </div>
+  <div id=mainMenu>
+    <div class=background></div>
+    <div class=outsideWrapper>
+      <div class=insideWrapper>
+        <div class="miniWrapper discordHolder">
+          <iframe frameborder=0 title="Discord Widget" allowtransparency=true class=discordWidget src="https://discord.com/widget?id=945134461622812692&theme=dark"></iframe>
+        </div>
+        <div class="miniWrapper middleWrapper" style=flex-wrap:nowrap>
+          <p class=serversText>
+            <b>Woomy Arras</b>
+          </p>
+          <div class="miniWrapper serversContainer">
+            <!-- <p class=serversText id=serversText>-->
+              <!-- <b>Servers</b>   -->
+            <div class=serversHolder id=serverSelector>
+              <p id=loadingServersText>Fetching server data...
+            </div>
+          </div>
+          <div class="miniWrapper serversContainer">
+            <p class=gamemodeText>Gamemode</p>
+            <select class=animationsInput id=gamemode>
+              <option value=menuSection1 disabled>--- FFA ---
+              <option value=ffa>Free For All
+              <option value=maze>Maze
+              <option value=ppffa disabled>Portal Free For All (broken)
+			  <option value=twfr disabled>Trench Warfare (broken)
+              <option value=menuSectionGrowth disabled>--- GROWTH MODES ---
+              <option value=growth>Growth FFA
+              <option value=growthtesting>Growth Testing (For testers)
+              <option value=growthmaze>Growth Maze FFA
+              <option value=growthtdm>Growth 4TDM
+              <option value=growth2tdm>Growth 2TDM
+              <option value=growthmazetdm>Growth Maze 4TDM
+              <option value=growthboss>Growth Boss Rush
+              <option value=growthsolovteam>Growth Solo vs Team
+              <option value=growthsolovteamcorners>Growth Solo vs Team (Corners)
+              <option value=growthbossv2>Growth Siege (Broken)
+              <option value=menuSection2 disabled>--- TDM ---
+              <option value=2dom>2TDM Domination
+              <option value=2mot>2TDM Mothership
+              <option value=p2mot>2 TDM Portal Mothership
+              <option value=2tag>2TDM Tag
+              <option value=4dom>4TDM Domination
+              <option value=4mot>4TDM Mothership
+              <option value=4tag>4TDM Tag
+              <option value=4tdm>4TDM
+              <option value=tdm>3TDM
+              <option value=mazetdm>Maze TDM
+              <option value=menuSection3 disabled>--- MISC ---
+              <option value=boss>Boss Rush
+              <option value=carrierBattle>Carrier Battle
+              <option value=crptTanks disabled>Corrupt Tanks (broken)
+              <option value=ranked>Ranked
+              <option value=testing>Testing
+              <option value=dev>Development
+              <option value=menuSection4 disabled>--- ORIGINALS ---
+              <option value=brawlffaSmall>Brawl (Small)
+              <option value=brawlffaLarge>Brawl (Large)
+              <option value=longHallway>Long Hallway
+              <option value=rockHell>Rock Hell
+              <option value=2skrim>2TDM Skrimish
+              <option value=4skrim>4TDM Skrimish
+            </select>
+          </div>
+          <div class="miniWrapper playerInputsContainer">
+            <input class=playerInput id=playerNameInput placeholder=Name>
+            <input class=playerInput id=playerKeyInput placeholder=Token type=password>
+            <button id=startButton class=playerButton>Play</button>
+            <button id=teamSelectButton class=playerButton>Team: Auto</button>
+          </div>
+        </div>
+        <div class="miniWrapper patchNotesHolder">
+          <p class=patchNotesTitle>Changelog</p>
+          <iframe frameborder=0 title="Patch Notes" id=patchNotesIFrame onload='this.src||(this.src="./changelog.html?a="+Date.now()+"&type="+localStorage.menuType)' seamless>Patch notes should go here. If you are see this message, then something went wrong!</iframe>
+        </div>
+        <div class="miniWrapper underMenuHolder">
+          <div class="miniWrapper animationsContainer">
+            <p class=animationsText>Menu Animations</p>
+            <select class=animationsInput id=optAnimation tabindex=-1>
+              <option value=snow>Snow
+              <option value=fireworks>Fireworks
+              <option value=balls>Balls
+              <option value=spiral>Spiral
+              <option value=circleSpinnyThing>Spiin
+              <option value=none>None
+            </select>
+          </div>
+          <div class="miniWrapper buttonsContainer">
+            <p class=buttonsText>Links & Info
+            <div class="miniWrapper buttonsHolder">
+              <button onclick=displayMission()>Our Mission</button>
+              <button onclick=displayDisclaimer()>Disclaimer</button>
+              <button onclick=displayControls()>Controls</button>
+              <button onclick='openLink("An inventation to join the offical discord","https://discord.gg/FgxE4eVbtH")'>Discord</button>
+              <button onclick='openLink("A link to the offical world record sheet","https://docs.google.com/spreadsheets/d/1pWbywG5Gmcllv8fuvgikGVFR_RsEQNKMZ0Dn1SG0eoY/edit#gid=67864041")'>World Records</button>
+              <button onclick='openLink("A link to the offical google form to submit records","https://docs.google.com/forms/d/e/1FAIpQLSdZgE5BGVwoIp5UpFH5LoV2_95C6oDCQkcew2U0kCtmBcFgYw/viewform?usp=sf_link")'>Submit a record</button>
+              <button onclick='openLink("A link to the GitHub Repo for this game","https://github.com/")'>Github</button>
+              <button onclick='localStorage.menuType="old",location.reload()'>Old Menu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class=popupContainer id=popupContainer>
+      <div class=popup id=infoPopup style=display:none>
+        <p class=popupTitle id=infoPopup-Title>Title
+        <p class=popupBody id=infoPopup-Body>Message</p>
+        <button id=openLinkTabButton style=display:none>Open</button>
+        <button onclick=fadePopupOut() id=infoPopup-close>Close</button>
+      </div>
+    </div>
+  </div>
+  <script src="js/31-token-logic.js?v=20260223c"></script><script src="js/32-mockup-polyfill.js?v=20260223c"></script><script src="js/33-part.js"></script>
+
+
+
