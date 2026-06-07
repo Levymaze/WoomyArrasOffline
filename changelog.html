@@ -791,76 +791,126 @@ canvas {
             <li style="color : rgb(189, 189, 189);">Then it was modified by <a href="https://github.com/spade1345" target="_blank" rel="noopener noreferrer"> @Spade1354 </a>to re-add many of the missing or lost tanks as well as some other changes regarding AI and bots</li>
             <li style="color : rgb(189, 189, 189);">Now It's being modified again by  <a href="https://github.com/levymaze" target="_blank" rel="noopener noreferrer"> @Levymaze</a> by expanding and maintaining new modes, new tanks and many new testing features.</li>
             <li style="color : rgb(189, 189, 189);">Use the arrow buttons at the bottom of this changelog to navigate it - some notes on the game are in the following pages!</li>
+            <li style="color : greenyellow; font-weight:700;">Developer Note: This project is actively being worked on. Expect frequent changes!</li>
         </ul>
     </div>
+
+    <!-- Newest to Oldest Patches -->
     <div class="patchnoteSection">
-        <p class="patchnoteTitle">Welcome to Woomy-Arras Offline<span class="patchnoteTime">14 February 2026</span></p>
+        <p class="patchnoteTitle">In Development Features & Warnings<span class="patchnoteTime">05 June 2026</span></p>
         <ul class="patchnoteBody">
-            <li style="color : rgb(189, 189, 189);">
-                Latest changes added by <a href="https://github.com/LevyMaze" target="_blank" rel="noopener noreferrer">@Levymaze</a>:
-                <ul>
-                    <li style="color : rgb(189, 189, 189);"><b>22 February 2026</b>
-                        <ul>
-                            <li style="color : rgb(189, 189, 189);">Added Top Banana (Factory-line) as a tier-5 route: Basic -&gt; Director -&gt; Spawner -&gt; Factory -&gt; Top Banana.</li>
-                            <li style="color : rgb(189, 189, 189);">Added Ultra Spawner as a playable Spawner-line tank with 4 minions.</li>
-                            <li style="color : rgb(189, 189, 189);">Added Mega Spawner as a tier-4 bridge and shifted the path to: Basic -&gt; Director -&gt; Spawner -&gt; Mega Spawner -&gt; Top Banana / Ultra Spawner.</li>
-                            <li style="color : rgb(189, 189, 189);">Split class and mockup overrides so Top Banana, Ultra Spawner, Mega Spawner, and their minions can be tuned independently.</li>
-                            <li style="color : rgb(189, 189, 189);">Added mockup gun layering support with draw_z for synced UI barrels.</li>
-                            <li style="color : rgb(189, 189, 189);">Added Top Banana-specific mockup barrel mapping so its card/UI barrels can be tuned separately from gameplay gun definitions.</li>
-                            <li style="color : rgb(189, 189, 189);">Adjusted global drone right-click lock behavior: larger stick range, hold-to-track while right-click is held, and release when cursor movement jumps too far or right-click is released.</li>
-                        </ul>
-                    </li>
-                    <li style="color : rgb(189, 189, 189);"><b>21 February 2026</b>
-                        <ul>
-                            <li style="color : rgb(189, 189, 189);">Added new tanks: Wrench and Spanner.</li>
-                            <li style="color : rgb(189, 189, 189);">Added upgrade route: Basic -> Flank Guard -> Auto-3 -> Wrench / Spanner.</li>
-                            <li style="color : rgb(189, 189, 189);">Made both tanks playable across game modes, including Growth variants.</li>
-                            <li style="color : rgb(189, 189, 189);">Updated client mockup sync so Wrench/Spanner UI and turret rendering match live definitions.</li>
-                        </ul>
-                    </li>
-                    <li style="color : rgb(189, 189, 189);"><b>15 February 2026</b>
-                        <ul>
-                            <li style="color : rgb(189, 189, 189);">Developer keybinds: added + and - to increase/decrease FoV (developer token only).</li>
-                        </ul>
-                    </li>
-                    <li style="color : rgb(189, 189, 189);"><b>14 February 2026</b>
-                        <ul>
-                            <li style="color : rgb(189, 189, 189);">Testing panel: now only visible to authorized testers/developers.</li>
-                            <li style="color : rgb(189, 189, 189);">Testing panel: added World Edit controls for bots and polygons.</li>
-                            <li style="color : rgb(189, 189, 189);">Testing panel: added limits to prevent extreme values (score capped at 100,000,000; bots capped at 50; polygons capped server-side).</li>
-                            <li style="color : rgb(189, 189, 189);">Growth: extended growth application to non-player entities (polygons and bosses now gain size and a small health bonus as they gain score).</li>
-                            <li style="color : rgb(189, 189, 189);">Balance: small damage buffs to Spreadshot, Deletionist, and Tera Trapper.</li>
-                            <li style="color : rgb(189, 189, 189);">Developer keybinds: added I/U/H to adjust score or heal the entity under your cursor; teleport (Q) is now developer-only.</li>
-                            <li style="color : rgb(189, 189, 189);">Controls: tank tree key changed from U to [.</li>
-                        </ul>
-                    </li>
-                    <li style="color : rgb(189, 189, 189);"><b>13 February 2026</b>
-                        <ul>
-                            <li style="color : rgb(189, 189, 189);">Added Growth hybrid modes: Growth Siege (Boss Rush), Growth Maze (FFA), and Growth TDM.</li>
-                            <li style="color : rgb(189, 189, 189);">Fixed mode resolution so Growth hybrids load their correct configs (not plain Growth FFA).</li>
-                            <li style="color : rgb(189, 189, 189);">Adjusted Growth overrides so only plain Growth forces FFA behavior; hybrids keep their base-mode mechanics (teams/maze/boss rush).</li>
-                            <li style="color : rgb(189, 189, 189);">Added the Growth hybrid modes to the Gamemodes dropdown and fixed a TDM option value typo.</li>
-                            <li style="color : rgb(189, 189, 189);">Added a death screen Back button that returns to the main menu without reloading the page.</li>
-                            <li style="color : rgb(189, 189, 189);">Added teleport-to-mouse shortcut on Q (with temporary invulnerability during teleport).</li>
-                        </ul>
-                    </li>
-                    <li style="color : rgb(189, 189, 189);"><b>11 February 2026</b>
-                        <ul>
-                            <li style="color : rgb(189, 189, 189);">Added Growth mode (FFA).</li>
-                            <li style="color : rgb(189, 189, 189);">Added a public testing/admin panel for Growth testing.</li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
+            <li style="color : rgb(189, 189, 189);">Please do not play with the following tanks which are currently in development: <b>Annihilator</b>, <b>Retributor</b>, and <b>Flattner</b>. They might exhibit unintended behaviors.</li>
+            <li style="color : rgb(189, 189, 189);"><b>Growth siege</b> is also actively in development, play at your own risk.</li>
         </ul>
     </div>
 
     <div class="patchnoteSection">
-        <p class="patchnoteTitle">Controls<span class="patchnoteTime">23 September 2025</span></p>
+        <p class="patchnoteTitle">Bugs & Physics Fixes<span class="patchnoteTime">28 May 2026</span></p>
         <ul class="patchnoteBody">
-            <li>Basic Controls
-                <ul>
-                    <li>WASD - Movement</li>
+            <li style="color : rgb(189, 189, 189);">State of Bugs and Fixes: Addressed multiple outstanding issues related to physics and growth mechanics.</li>
+            <li style="color : rgb(189, 189, 189);">Fixed bugs regarding growth physics and barrel length reach shooting physics resulting in inconsistencies.</li>
+            <li style="color : rgb(189, 189, 189);">Resolved calculation errors related to the one to many bullet damage physics.</li>
+            <li style="color : rgb(189, 189, 189);">Implemented various fixes to correct overarching growth bullet physics.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Growth Game Modes Addition: Growth Siege and Growth Boss Rush<span class="patchnoteTime">18 May 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added and expanded the Growth Siege to the gamemodes list.</li>
+        </ul>
+        <li style="color : rgb(189, 189, 189);">Added the Growth Boss Rush Variant to the gamemodes list.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Growth Game Modes Addition: Maze TDM Variant<span class="patchnoteTime">14 May 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added and expanded the Growth Maze TDM variant to the gamemodes list.</li>
+            <li style="color : rgb(189, 189, 189);">Experience Growth 2TDM, Growth 4TDM, Growth 4TDM maze</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Growth Game Modes Addition: Solo vs Team (Corners)<span class="patchnoteTime">10 May 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added Growth Solo vs Team (Corners) — featuring compact bases placed in the corners of the arena.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Growth Game Modes Addition: Solo vs Team<span class="patchnoteTime">02 May 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added Growth Solo vs Team — a mode where the player spawns alone against a full opposing team of bots.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Growth Game Modes Addition: 2TDM<span class="patchnoteTime">25 April 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added Growth 2TDM with improved scaling configurations and fresh continuous side strips.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Balance Updates: Deletionist<span class="patchnoteTime">10 April 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">We have nerfed the Deletionist, significantly reducing its excessive burst potential for fairer gameplay.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Balance Updates: Heavy Drones Branch<span class="patchnoteTime">01 April 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Applied buffs and nerfs to the Heavy Drones class branch.</li>
+            <li style="color : rgb(189, 189, 189);">Tweaked drone counts and health scaling for tanks like <b>Headman</b> and <b>Bigger cheese</b>.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Balance Updates: Mega Factory Branch<span class="patchnoteTime">15 March 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Applied buffs and nerfs to the Mega factory class branch.</li>
+            <li style="color : rgb(189, 189, 189);">Adjusted minion spawner rates and damage output for <b>Mega spawner</b>, <b>Ultra spawner</b>, and <b>Top banana</b>.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Balance Updates: Builder Branch and Crowbar branch and <span class="patchnoteTime">01 March 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Applied buffs and nerfs to the Builder class branch.</li>
+            <li style="color : rgb(189, 189, 189);">nerfed auto 3 guns of <b>Crowbar</b>, <b>Spanner</b>, and <b>Wrench</b>.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Balance Updates: Destroyer Branch<span class="patchnoteTime">18 February 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Applied buffs and nerfs to the Destroyer class branch.</li>
+            <li style="color : rgb(189, 189, 189);">Implemented various adjustments to big shell penetration and recoil mechanics, affecting tanks like <b>Big mac</b>.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Tank Additions: Heavy Classes<span class="patchnoteTime">05 February 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added new Heavy Droners: <b>Headman</b> and <b>Bigger cheese</b>.</li>
+            <li style="color : rgb(189, 189, 189);">Added new Heavy Destroyers: <b>Big mac</b>.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Tank Additions: Mega Spawners<span class="patchnoteTime">25 January 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added new Mega Spawners: <b>Mega spawner</b>, <b>Ultra spawner</b>, and <b>Top banana</b>.</li>
+        </ul>
+    </div>
+
+    <div class="patchnoteSection">
+        <p class="patchnoteTitle">Tank Additions: Crowbars<span class="patchnoteTime">10 January 2026</span></p>
+        <ul class="patchnoteBody">
+            <li style="color : rgb(189, 189, 189);">Added new Crowbar utilities: <b>Crowbar</b>, <b>Spanner</b>, and <b>Wrench</b>.</li>
+i>
                     <li>SPACE or Primary Mouse Button - Fire</li>
                     <li>E - Toggle autofire</li>
                     <li>C - Toggle autospin</li>

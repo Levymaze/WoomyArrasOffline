@@ -26,7 +26,7 @@ This project has passed through several contributors:
   Restored many missing tanks and added AI and bot improvements. Also merged multiple legacy sources to make the project playable offline.
 
 - LevyMaze
-  Added Growth modes, testing tools, admin features, and continues active development.
+  Added Growth modes, testing tools, admin features, new tanks and continues active development.
 
 ---
 
@@ -37,8 +37,12 @@ This project has passed through several contributors:
 - Re-added Growth FFA.
 - Added several Growth hybrid modes including:
   - Growth 4TDM
-  - Growth Siege (Boss Rush)
+  - Growth Siege
   - Growth Maze FFA
+  - Growth 2TDM
+  - Growth 4TDM Maze
+  - Growth Solo vs Team
+  ... and many more
 
 These modes are mainly for experimentation and fun while keeping the original Arras feel.
 
@@ -55,6 +59,7 @@ These modes are mainly for experimentation and fun while keeping the original Ar
   - Change total bot count
   - Change total polygon count
 
+ - +7 new features
 ---
 
 ### Admin / Developer Commands (Dev Token Required)
@@ -67,6 +72,8 @@ Added multiple admin commands for testing and moderation:
 - Q - Instant teleport with temporary immunity
 - (+) - Increase Field of View
 - (-) - Decrease Field of View
+- V - Add Walls
+... and many more
 
 Also added:
 
@@ -92,10 +99,12 @@ These tools are mainly meant for development and sandbox testing.
   - Increased cursor stick range.
   - Drones now keep tracking while right-click is held, and release if the cursor moves away too fast or right-click is released.
 
+  - Many more tanks have been added
+
 ---
 
 ## Ongoing Development
 
 This project is still being worked on.
 
-More features may be added over time.
+I have added 13+ new features that I won't state here. More features may be added over time.

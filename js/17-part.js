@@ -6658,9 +6658,9 @@ defExport.builder = {
     GUNS: [{
         POSITION: [18, 12, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [2, 12, 1.1, 22, 0, 0, 0],
+        POSITION: [0, 12, 1.1, 22, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, [1, 1, 1, 1, 0.55, 0.4, 0.55, 1, 1, 1, 0.7, 1, 0.8]]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, [1, 1, 1, 1, 0.8, 0.6, 0.8, 1, 1, 1, 0.7, 1, 0.8]]),
             TYPE: defExport.block
         }
     }]
@@ -6702,11 +6702,11 @@ defExport.construct = {
     },
     STAT_NAMES: statNames.block,
     GUNS: [{
-        POSITION: [18, 18, 1, 0, 0, 0, 0]
+        POSITION: [2, 18, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [2, 18, 1.2, 18, 0, 0, 0],
+        POSITION: [0, 18, 1.2, 18, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.more_power, g.more_damage]),
             TYPE: defExport.block
         }
     }]
@@ -26422,9 +26422,9 @@ defExport.builderAutoGun = {
     GUNS: [{
         POSITION: [18, 12, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [2, 12, 1.1, 18, 0, 0, 0],
+        POSITION: [0, 12, 1.1, 18, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.less_reload]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.less_reload, g.more_power]),
             TYPE: defExport.block
         }
     }]
@@ -34788,7 +34788,7 @@ defExport.anniSteamroll = {
     }, {
         POSITION: [11, 20, 1.01, 16, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam, g.more_power, g.more_damage, g.more_power]),
             TYPE: defExport.bullet
         }
     }]
@@ -34907,7 +34907,7 @@ defExport.rangerObliterator = {
         FOV: 1.4
     },
     GUNS: [{
-        POSITION: [17, 12, 1.01, 18.4, 0, 0, 0],
+        POSITION: [23.2, 12, 1.01, 18.4, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.sniper, g.assassin, g.ranger]),
             TYPE: defExport.bullet
@@ -133411,7 +133411,7 @@ defExport.antipode = {
             STAT_CALCULATOR: gunCalcNames.thruster
         }
     }, {
-        POSITION: [10.25, 19.5, 1, 0, 0, 180, 0],
+        POSITION: [25.2, 19.5, 1, 0, 0, 180, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.more_recoil, g.more_recoil, g.more_recoil, g.more_reload]),
             TYPE: defExport.descenderBullet,
@@ -133420,7 +133420,7 @@ defExport.antipode = {
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 185, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.less_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
             ALT_FIRE: true
@@ -133428,7 +133428,7 @@ defExport.antipode = {
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 190, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.less_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
             ALT_FIRE: true
@@ -133436,7 +133436,7 @@ defExport.antipode = {
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 195, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.less_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
             ALT_FIRE: true
@@ -133444,7 +133444,7 @@ defExport.antipode = {
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 175, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.less_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
             ALT_FIRE: true
@@ -133452,7 +133452,7 @@ defExport.antipode = {
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 170, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.less_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
             ALT_FIRE: true
@@ -133460,7 +133460,7 @@ defExport.antipode = {
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 165, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.less_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
             ALT_FIRE: true
