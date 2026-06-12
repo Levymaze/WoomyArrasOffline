@@ -32,7 +32,7 @@ Format css in this order:
     --transition-time: 0.14s;
     --menu-background: rgba(0, 0, 0, 0.5);
     --main-background-color: rgba(0, 0, 0, 0.3);
-    --main-text-color: rgba(255, 255, 255, 0.5);
+    --main-text-color: rgb(189, 189, 189);
     --main-text-glow-color: rgba(255, 255, 255);
     --main-border-raidus: 10px;
     --button-background: rgba(0, 0, 0, 0.4);
@@ -634,6 +634,10 @@ canvas {
 
 .patchnoteBody {
     font-size: 5vw;
+    color: var(--main-text-color);
+}
+
+.patchnoteSection :not([style*="color"]):not([style*="Color"]):not([style*="COLOR"]) {
     color: var(--main-text-color);
 }
 .patchnoteBody>hr{
@@ -28797,7 +28801,7 @@ i>
             const thingy = urlParams.get("type")
             if (thingy === 'old' && !(location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
                 document.body.style.overflow = "auto"
-                document.querySelector(":root").style.setProperty('--main-text-color', '#000');
+                document.querySelector(":root").style.setProperty('--main-text-color', 'rgb(189, 189, 189)');
                 document.querySelector(":root").style.setProperty('--popup-button-color', '#666');
                 document.getElementById("btnholder").remove();
                 for (let element of PATCHNOTES) {
