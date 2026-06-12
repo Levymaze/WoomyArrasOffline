@@ -2,15 +2,13 @@
   "use strict";
 
   const POPUNDER_SRC = "https://pl29701434.effectivecpmnetwork.com/6d/54/f0/6d54f07887e71b86d4927c915f344a50.js";
-  const SOCIAL_BAR_SRC = "https://pl29722198.effectivecpmnetwork.com/3f/5e/ec/3f5eec856323324b21d05c9fae77b1ad.js";
+  const SESSION_KEY = "woomyPopunderShownThisSession";
 
   function injectScript(src, id) {
-    const previous = document.getElementById(id);
-    if (previous) previous.remove();
-
+    if (!src || document.getElementById(id)) return;
     const script = document.createElement("script");
     script.id = id;
-    script.src = src + (src.includes("?") ? "&" : "?") + "deathAdAt=" + Date.now();
+    script.src = src;
     script.async = true;
     document.head.appendChild(script);
   }
@@ -23,19 +21,26 @@
     sessionStorage.setItem("woomyDeathCount", String(count));
   }
 
-  function runDeathScreenAds() {
-    injectScript(SOCIAL_BAR_SRC, "woomy-death-social-bar-ad");
-    injectScript(POPUNDER_SRC, "woomy-death-popunder-ad");
+  function shouldShowPopunder() {
+    return sessionStorage.getItem(SESSION_KEY) !== "1";
   }
 
   window.__woomyAds = {
-    markDeath(deathAt) {
-      const deathKey = deathAt ? String(deathAt) : "unknown-death";
-      if (deathKey === this.lastDeathKey) return;
-      this.lastDeathKey = deathKey;
+    onDeathScreen() {
+      if (this.lastDeathAt === window.__woomyLastDiedAt) return;
+      window.__woomyLastDiedAt = this.lastDeathAt;
 
-      setDeathCount(getDeathCount() + 1);
-      runDeathScreenAds();
+      const deathCount = getDeathCount() + 1;
+      setDeathCount(deathCount);
+
+      if (!shouldShowPopunder()) return;
+      sessionStorage.setItem(SESSION_KEY, "1");
+      injectScript(POPUNDER_SRC, "woomy-popunder-ad");
+    },
+
+    markDeath(deathAt) {
+      this.lastDeathAt = deathAt || Date.now();
+      this.onDeathScreen();
     }
   };
 }());
