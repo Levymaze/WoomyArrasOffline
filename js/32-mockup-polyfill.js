@@ -6908,6 +6908,7 @@
                                     return txt;
                                 };
                             return function () {
+                                if (window.__woomyAds && window.__woomyAds.markDeath) window.__woomyAds.markDeath(global.diedAt);
                                 clearScreen(color.black, .25);
                                 let x = global.screenWidth / 2,
                                     y = global.screenHeight / 2 - 50,
@@ -7542,6 +7543,7 @@
                                     case global.KEY_ENTER:
                                         if (global.enterToRejoinQueue) {
                                             this.parent.socket.talk("j");
+                                            if (window.__woomyAds && window.__woomyAds.clearDeathAds) window.__woomyAds.clearDeathAds();
                                             global.died = false;
                                             window.inQueue = true;
                                             global.queueStart = Date.now();
@@ -7555,6 +7557,7 @@
                                             this.parent.socket.talk("s", socketOut.toString(), 0, window.__woomyGetSpawnTeamChoice ? window.__woomyGetSpawnTeamChoice() : 0);
                                         }
                                         this.parent.autoUpgrade();
+                                        if (window.__woomyAds && window.__woomyAds.clearDeathAds) window.__woomyAds.clearDeathAds();
                                         global.died = false;
                                         setTimeout(function () {
                                             global.resetMenuColor = false;
@@ -7877,6 +7880,7 @@
                                 e.preventDefault();
                                 if (global.enterToRejoinQueue) {
                                     this.parent.socket.talk("j");
+                                    if (window.__woomyAds && window.__woomyAds.clearDeathAds) window.__woomyAds.clearDeathAds();
                                     global.died = false;
                                     window.inQueue = true;
                                     global.queueStart = Date.now();
@@ -7900,6 +7904,7 @@
                                             return;
                                         }
                                     }
+                                    if (window.__woomyAds && window.__woomyAds.clearDeathAds) window.__woomyAds.clearDeathAds();
                                     global.died = false;
                                     this.parent.socket.talk('s', global.playerName, 0);
                                     this.parent.autoUpgrade();
@@ -8025,7 +8030,10 @@
                                     switch (event.keyCode) {
                                         case global.KEY_ENTER:
                                             if (global.diedAt + 3e3 - Date.now() > 0 || (global.disconnected && global.gameStart)) return;
-                                            if (global.died) this.parent.socket.talk("s", global.playerName, 0);
+                                            if (global.died) {
+                                                if (window.__woomyAds && window.__woomyAds.clearDeathAds) window.__woomyAds.clearDeathAds();
+                                                this.parent.socket.talk("s", global.playerName, 0);
+                                            }
                                             global.died = false;
                                             setTimeout(function() {
                                                 global.resetMenuColor = false;
