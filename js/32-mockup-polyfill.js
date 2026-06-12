@@ -6908,6 +6908,7 @@
                                     return txt;
                                 };
                             return function () {
+                                if (window.__woomyAds && window.__woomyAds.markDeath) window.__woomyAds.markDeath(global.diedAt);
                                 clearScreen(color.black, .25);
                                 let x = global.screenWidth / 2,
                                     y = global.screenHeight / 2 - 50,
