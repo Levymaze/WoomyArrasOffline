@@ -33,7 +33,7 @@ const popup = document.getElementById("infoPopup");
         function displayDisclaimer() {
             fadePopupIn()
             popupTitle.textContent = "Disclaimer";
-            popupMessage.textContent = "I do not own the code. I did not make it. The code is a result of core files from August 2020 combined with files from the arras.io source in order to make this. Hellcat and Clarise (The original devs) made the game, and Drako Hyena got it back up. Not me. I just got it to run so you can play it.";
+            popupMessage.textContent = "I am NOT affiliated with the original Developers of Woomy-arras.io, This is a modded version of woomy-offline, you can play the original woomy-offline 'woomyarras.vercel.app' This web address is not hosted by Levymaze.";
         }
         function displayControls() {
             fadePopupIn()
@@ -46,5 +46,7 @@ const popup = document.getElementById("infoPopup");
             M+<stat number> - Max out that stat \n
             U - Show upgrade tree \n
             Arrow Keys (with upgrade tree open) - Pan upgrades
+            WASD - Move around \n
+            Space/left click - Shoot
             `;
         }
