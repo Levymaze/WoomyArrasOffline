@@ -12,7 +12,7 @@
       <meta content="index, follow" name=robots>
       <!-- Open Graph (used by Facebook, LinkedIn, many messengers) -->
       <meta property="og:title" content="Woomy-Arras.io">
-      <meta property="og:description" content="Try Growth with bots offline. Dm Discord @Levymaze for Beta tester token.">
+      <meta property="og:description" content="Wommy-arras.io Offline but with new tanks and Growth with bots. Dm Discord @Levymaze for Beta tester token.">
       <meta property="og:url" content="https://levymaze.github.io/WoomyArrasOffline/">
       <meta property="og:image" content="https://levymaze.github.io/WoomyArrasOffline/resources/background-logo.jpg">
       <meta property="og:image:secure_url" content="https://levymaze.github.io/WoomyArrasOffline/resources/background-logo.jpg">
@@ -25,6 +25,9 @@
       <meta name="twitter:title" content="Woomy-Arras.io">
       <meta name="twitter:description" content="Try Growth with bots offline. Dm Discord @Levymaze for Beta tester token.">
       <meta name="twitter:image" content="https://levymaze.github.io/WoomyArrasOffline/resources/background-logo.jpg">
+
+
+
 <style>
   * {
     font-family: Ubuntu;
@@ -786,7 +789,8 @@
     border-radius: var(--main-border-raidus);
     border-style: hidden;
     padding: .5%;
-    backdrop-filter: blur(3px)
+    backdrop-filter: blur(3px);
+
   }
 
   .patchNotesNavHolder {
@@ -844,7 +848,7 @@
 
   #patchNotesIFrame {
     width: 100%;
-    height: calc(85% - 110px)
+    height: calc(110% - 110px)
   }
 
   #patchNotes {
@@ -888,20 +892,24 @@
   }
 
   .homeAdHolder {
-    width: 95%;
     min-height: 90px;
-    height: 100px;
     max-height: 160px;
     background: var(--menu-background);
     border-radius: var(--main-border-raidus);
     border-style: hidden;
-    padding: .5%;
+    padding-bottom: 4%;
+    padding-right: 4%;
     backdrop-filter: blur(3px);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: hidden
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    color: white;
+    font-size: 16px;
+
   }
 
   .homeAdHolder::before {
@@ -932,16 +940,16 @@
   <div id=mainMenu>
     <div class=background></div>
     <div class=outsideWrapper>
+
       <div class=insideWrapper>
-        <div class="miniWrapper homeAdHolder" aria-label="Advertisement">
-          <div id="container-a29c3c2bd36667c309faadf95946de0e" class="homeNativeAdSlot"></div>
-          <script async="async" data-cfasync="false" src="https://pl29722175.effectivecpmnetwork.com/a29c3c2bd36667c309faadf95946de0e/invoke.js"></script>
-        </div>
+
         <div class="miniWrapper middleWrapper" style=flex-wrap:nowrap>
           <p class=serversText>
             <b>Woomy Arras</b>
           </p>
+
           <div class="miniWrapper serversContainer">
+
             <!-- <p class=serversText id=serversText>-->
               <!-- <b>Servers</b>   -->
             <div class=serversHolder id=serverSelector>
@@ -994,6 +1002,7 @@
               <option value=4skrim>4TDM Skrimish
             </select>
           </div>
+
           <div class="miniWrapper playerInputsContainer">
             <input class=playerInput id=playerNameInput placeholder=Name>
             <input class=playerInput id=playerKeyInput placeholder=Token type=password>
@@ -1001,13 +1010,11 @@
             <button id=teamSelectButton class=playerButton>Team: Auto</button>
           </div>
         </div>
+
         <div class="miniWrapper patchNotesHolder">
-          <div class="miniWrapper homeAdHolder" aria-label="Advertisement">
-            <div id="container-a29c3c2bd36667c309faadf95946de0e" class="homeNativeAdSlot"></div>
-            <script async="async" data-cfasync="false" src="https://pl29722175.effectivecpmnetwork.com/a29c3c2bd36667c309faadf95946de0e/invoke.js"></script>
-          </div>
+
           <p class=patchNotesTitle>Changelog</p>
-          <iframe frameborder=0 title="Patch Notes" id=patchNotesIFrame onload='this.src||(this.src="./changelog.html?a="+Date.now()+"&type="+localStorage.menuType)' seamless>Patch notes should go here. If you are see this message, then something went wrong!</iframe>
+          <iframe frameborder=0 title="Patch Notes" id=patchNotesIFrame onload='this.src||(this.src="./changelog.html?a="+Date.now()+"&type="+localStorage.menuType)' seamless>Patch notes should go here. If you see this message, then something went wrong!</iframe>
         </div>
         <div class="miniWrapper underMenuHolder">
           <div class="miniWrapper animationsContainer">
@@ -1047,7 +1054,7 @@
     </div>
   </div>
   <script src="js/31-token-logic.js?v=20260223c"></script><script src="js/32-mockup-polyfill.js?v=20260223c"></script><script src="js/33-part.js"></script>
-  <script src="https://pl29722198.effectivecpmnetwork.com/3f/5e/ec/3f5eec856323324b21d05c9fae77b1ad.js"></script>
+
   <script src="js/34-ads.js"></script>
 
 

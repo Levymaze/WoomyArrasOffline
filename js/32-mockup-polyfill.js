@@ -2608,7 +2608,7 @@
                             };
                             window.addEventListener("resize", resizeEvent);
                             resizeEvent();
-                            console.log("%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥\n%c   WARNING: Do not paste code or scripts here!\n%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥\n\n%c   Scripts that give you an unfair advantage can\n   result in a ban. Also, some scripts may\n   contain malicious code to steal your token!\n\n%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥", "color: crimson;", "color: crimson; font-weight: 900;", "color: crimson;", "color: DarkOrange;", "color: crimson;");
+                            console.log("%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥\n%c   WARNING: Do not paste code or scripts here!\n%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥\n\n%c   Scripts that give you an unfair advantage can\n   result in a ban. Also, some scripts may\n   contain malicious code to steal your token!\n\n%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥", "color: crimson;", "color: crimson; font-weight: 900;  font-size: 40px", "color: crimson;", "color: DarkOrange; font-size: 20px; font-weight: 900", "color: crimson;");
                         };
                         let Canvas = __webpack_require__(3);
                         let LZString = __webpack_require__(5);
@@ -3893,7 +3893,7 @@
                                 };
                                 socket.onopen = function () {
                                     socket.open = 1;
-                                    global.message = "Please wait while a connection attempt is being made.";
+                                    global.message = "If you see this message, reload the game and try again in a minute.";
                                     socket.clientIdentification = Math.random().toString(16).substr(2, 9);
                                     localStorage.setItem("_0xFFaB87", socket.clientIdentification);
                                     window.onstorage = function (event) {
@@ -7140,6 +7140,7 @@
                                 "Press the [ key to show the class tree.",
                                 "Hold the M key and press a number stat to instantly max out that stat.",
                                 "Hold the L key to show extra debug stuff above the minimap.",
+                                "If Levymaze gave you beta tester, don't abuse it",
                                 "If you have a low frame rate, you can try enabling Low Graphics in the options menu, which removes death fade.",
                                 "Don't like seeing a lot of messages? Or maybe they cause you lag? Consider enabling the Disable Messages option.",
                                 "The Four Upgrade Rows option may make the upgrade menu look and fit on the screen better.",
@@ -7193,7 +7194,9 @@
                                 "Seethe",
                                 "Mald",
                                 "YO WE GOT THAT IN VIDEOOOOOOOO",
+                                "Do not ask levymaze for another balance",
 								"Emotional damage will not stop you. Death will."
+
                             ],
                             deathSplashChoice: 0,
                             tankMenuColor: 0,

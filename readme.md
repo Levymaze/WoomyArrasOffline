@@ -1,110 +1,140 @@
-# Woomy-Arras Offline
+# Woomy-Arras Offline — Modded Edition
 
-## Background
+<p align="center">
+  <img src="resources/background-logo.jpg" alt="Woomy-Arras Offline Banner" width="900">
+</p>
 
-Woomy-Arras Offline is a community continuation of the original offline Woomy project after it lost funding and had to be taken down.
-
-This codebase is based on core server files from August 2020 combined with older Arras source files. The original game Woomy Arras was created by HellCat and Clarise. Later, Drako Hyena recovered and rebuilt offline versions of the game files around 2018, which became the foundation for many offline Woomy projects.
-
-This repository was later forked and modified by Spade1354, and is currently being expanded and maintained by LevyMaze.
-
-The goal of this project is to preserve Woomy-Arras in an offline form while also experimenting with new game modes, mechanics, and developer tools.
+<p align="center">
+  A community-driven offline fork featuring new gamemodes, developer tools, tank additions, balance changes, and quality-of-life improvements.
+</p>
 
 ---
 
-## History / Credits
+> [!IMPORTANT]
+> I do **not** own the original Woomy-Arras codebase. This repository contains my own modifications to a project originally cloned from **@spade1345**.
+>
+> Many of the additions found in this version were created in response to community requests and gameplay experimentation. Some content has never existed in the original Woomy-Arras project and may not reflect its original design philosophy.
+>
+> I am **not affiliated** with Drako Hyena or any of the developers behind Woomy-Arras. Consider this project a **fan-made continuation and experimentation branch**.
 
-This project has passed through several contributors:
+##  What Has Been Added
 
-- Clarise
-  Original creator of Arras / Arras.io.
+###  Additional Gamemodes
 
-- Drako Hyena
-  Recovered and rebuilt offline Arras files around 2018.
+Several Growth-based and hybrid gamemodes have been added or restored.
 
-- Spade1354
-  Restored many missing tanks and added AI and bot improvements. Also merged multiple legacy sources to make the project playable offline.
+#### Included Modes
 
-- LevyMaze
-  Added Growth modes, testing tools, admin features, new tanks and continues active development.
+- Growth FFA (Reintroduced)
+- Growth 2TDM
+- Growth 4TDM
+- Growth 4TDM Maze
+- Growth Maze FFA
+- Growth Siege
+- Growth Solo vs Team
+- Various additional Growth hybrids and experimental modes
 
----
-
-## What I Added
-
-### Game Modes
-
-- Re-added Growth FFA.
-- Added several Growth hybrid modes including:
-  - Growth 4TDM
-  - Growth Siege
-  - Growth Maze FFA
-  - Growth 2TDM
-  - Growth 4TDM Maze
-  - Growth Solo vs Team
-  ... and many more
-
-These modes are mainly for experimentation and fun while keeping the original Arras feel.
+> More gamemodes may be added in future updates.
 
 ---
 
-### Testing Tools
+###  Testing & Sandbox Tools
 
-- Improved Beta Testing Panel:
+A large collection of testing utilities has been added for developers, hosts, and sandbox gameplay.
 
-  - Score editing
-  - Skill point editing
+#### Available Features
 
-- Added World Edit options inside the testing panel:
-  - Change total bot count
-  - Change total polygon count
+- Spawn bosses
+- Spawn polygons
+- Adjust bot counts
+- Adjust polygon counts
+- Edit player skills
+- Edit score values
+- Edit map obstacles
+- Configure testing environments
+- And much more
 
- - +7 new features
----
-
-### Admin / Developer Commands (Dev Token Required)
-
-Added multiple admin commands for testing and moderation:
-
-- I - Increase entity score
-- U - Decrease entity score
-- H - Instantly heal any entity
-- Q - Instant teleport with temporary immunity
-- (+) - Increase Field of View
-- (-) - Decrease Field of View
-- V - Add Walls
-... and many more
-
-Also added:
-
-- A button to spawn bosses on any map.
-
-These tools are mainly meant for development and sandbox testing.
+> [!NOTE]
+> These tools are primarily intended for development, balancing, debugging, and sandbox testing.
 
 ---
 
-### Tank Additions and Combat Updates
+###  New Developer Keybinds
 
-- Added tanks: `Wrench` and `Spanner`.
-- Added upgrade path: `Basic -> Flank Guard -> Auto-3 -> Wrench / Spanner`.
-- Added `Top Banana` as a factory/MegaSpawner upgrade and placed it in the tier route:
-  - `Basic -> Director -> Spawner -> Mega Spawner/Factory -> Top Banana`
-- Added `Ultra Spawner` as a playable Spawner-line tank with its own class setup and 4 minion cap.
-- Added `Mega Spawner` as the tier-4 bridge in the Director/Spawner route.
-- Updated the Director drone branch routing to:
-  - `Basic -> Director -> Spawner -> Mega Spawner -> Top Banana / Ultra Spawner`
-- Split mockup/UI overrides so Top Banana, Ultra Spawner, Mega Spawner, and their minion visuals can be tuned independently.
-- Added mockup sync support for custom tank UI gun layouts (including draw-layer control via `draw_z` in mockup guns).
-- Updated drone right-click follow behavior globally:
-  - Increased cursor stick range.
-  - Drones now keep tracking while right-click is held, and release if the cursor moves away too fast or right-click is released.
+> Requires a valid Developer Token.
 
-  - Many more tanks have been added
+| Key | Action |
+|------|---------|
+| `I` | Increase entity score |
+| `U` | Decrease entity score |
+| `H` | Fully heal an entity |
+| `Q` | Instant teleport with temporary immunity |
+| `+` | Increase field of view |
+| `-` | Decrease field of view |
+| `V` | Create walls |
+| `T` | Change teams |
+
+---
+
+### Previously existing Developer Keybinds
+
+| Key | Action |
+|------|---------|
+| `F` | Spawn squares |
+| `K` | Self destruct |
+| `Z` | Hold and drag entity |
+| `P` | Change own tank to basic |
+| `X` | Passive mode |
+| `J` | Invisibilty |
+| `B` | Change Colors |
+|  `  | Change to developer tank |
+
+Additional developer shortcuts are also available.
+
+---
+
+###  Tank Additions
+
+New tanks and experimental branches have been introduced, including:
+
+- `Wrench`
+- `Spanner`
+- `Crowbar`
+- `Top Banana`
+- `Ultra Spawner`
+- `Mega Spawner`
+- `Headman`
+- `Bigger Cheese`
+- `Big Mac`
+
+...and many more.
+
+---
+
+###  Balancing, Fixes & Optimizations
+
+Numerous gameplay and backend improvements have been made throughout the project.
+
+#### Highlights
+
+- Rebalanced multiple tanks
+- Fixed Conqueror branch bots being unable to fire
+- Added Growth bullet physics
+- Optimized game files and resource loading
+- Various bug fixes and code cleanups
+- General balance adjustments and oversight corrections
+
+> [!TIP]
+> If you plan on forking or modifying this project, many JavaScript files have been reorganized for easier navigation and maintenance.
+>
+> Some code exists in minified form.
 
 ---
 
 ## Ongoing Development
 
-This project is still being worked on.
+This project remains under active development.
 
-I have added 13+ new features that I won't state here. More features may be added over time.
+More than **13 unreleased features** have already been implemented and are intentionally not documented here yet. Additional content, balancing changes, gamemodes, and developer tools may continue to be added over time.
+
+Contributions, experimentation, bug reports, and community feedback are always welcome.

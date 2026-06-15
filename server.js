@@ -3252,9 +3252,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 y: o,
               };
             }
-            return (
-              s < t && ((i.power = 0.15), ran.chance(0.3) && this.timer++), i
-            );
+
           }
         }
       }),
@@ -4123,7 +4121,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
     const teraTrapperBarrelReach = { mult: 4, backoff: 0.08 };
     const flattenerBarrelReach = { mult: 1.7, backoff: 0.34 };
   // reduced a bit to bring auto-3 turret bullets slightly closer to barrel
-  const wrenchSpannerAutoTurretMuzzleMult = 88;
+  const wrenchSpannerAutoTurretMuzzleMult = 100;
     const getBarrelReachTier = (e, t = null) =>
       t && isDominatorOrBossEntity(t)
         ? 0
@@ -4964,9 +4962,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         for (let e of ents) {
           e.damageReceived += share;
         }
-        // Make projectile die after this impact
-        proj.health.amount = 0;
-        return !0;
+
       },
       isGrowthPointBlankClusterHit = (e, t) => {
         if (!growthMode.isEnabled() || !e || !t) return !1;

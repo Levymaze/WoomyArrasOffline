@@ -6571,7 +6571,7 @@ defExport.destroyer = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [21, 14, 1, 0, 0, 0, 0],
+        POSITION: [30, 14, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy]),
             TYPE: defExport.bullet
@@ -6587,7 +6587,7 @@ defExport.annihilator = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [20.5, 19.5, 1, 0, 0, 0, 0],
+        POSITION: [27, 19.5, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni]),
             TYPE: defExport.bullet
@@ -28357,7 +28357,7 @@ defExport.conq = {
             SHOOT_SETTINGS: combineStats([g.trap, g.block, g.flank]),
             TYPE: defExport.block,
             LABEL: 'Builder',
-            ALT_FIRE: true
+            ALT_FIRE: false
         }
     }]
 };
@@ -34784,11 +34784,11 @@ defExport.anniSteamroll = {
         FOV: 1.2
     },
     GUNS: [{
-        POSITION: [18, 11.5, 1, 0, 0, 0, 0]
+        POSITION: [21, 11.5, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [11, 20, 1.01, 16, 0, 0, 0],
+        POSITION: [14, 20, 1.01, 16, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam, g.more_power, g.more_damage, g.more_power]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam, g.more_power]),
             TYPE: defExport.bullet
         }
     }]
@@ -36422,7 +36422,7 @@ defExport.anniConq = {
     GUNS: [{
         POSITION: [20.5, 19.5, 1, 0, 0, 180, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.flank, g.half_recoil, g.more_damage]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.flank, g.half_recoil, g.less_damage, g.bit_less_reload]),
             TYPE: defExport.bullet,
             LABEL: 'Annihilator'
         }
@@ -36431,10 +36431,10 @@ defExport.anniConq = {
     }, {
         POSITION: [2, 18, 1.2, 18, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.flank, g.bit_less_reload, g.more_pen]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.flank, g.more_pen]),
             TYPE: defExport.block,
             LABEL: 'Constructor',
-            ALT_FIRE: true
+
         }
     }]
 };
@@ -104101,7 +104101,7 @@ defExport.propConq = {
             SHOOT_SETTINGS: combineStats([g.trap, g.block, g.flank]),
             TYPE: defExport.block,
             LABEL: 'Builder',
-            ALT_FIRE: true
+            ALT_FIRE: false
         }
     }]
 };
@@ -104129,7 +104129,7 @@ defExport.backwardsConq = {
             SHOOT_SETTINGS: combineStats([g.trap, g.block, g.flank]),
             TYPE: defExport.block,
             LABEL: 'Builder',
-            ALT_FIRE: true
+            ALT_FIRE: false
         }
     }]
 };
@@ -110541,7 +110541,7 @@ defExport.deletionist = {
     }, {
         POSITION: [9, 12, .6, 6, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.stronger, g.stronger, g.more_range, g.no_speed, g.no_damage, g.less_reload, g.less_reload, g.less_reload, g.less_reload]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.stronger, g.stronger, g.more_range, g.no_speed, g.no_damage, g.less_reload, g.less_reload, g.less_reload, g.less_reload, g.less_damage]),
             TYPE: defExport.deletionistBullet,
             MAX_CHILDREN: 3
         }
@@ -141183,78 +141183,7 @@ defExport.annihilator.UPGRADES_TIER_4 = defExport.annihilator.UPGRADES_TIER_4.fi
         defExport.annihilator.UPGRADES_TIER_4.splice(bigMacInsertAt + 1, 0, defExport.bigMac);
     }
 }
-{
-    // Tiered Destroyer/Annihilator branch tuning:
-    // - Destroyer branch is nerfed harder than Annihilator branch
-    // - Big Mac and Flattener stay above Annihilator by being excluded
-    // - Keep barrel offset push for tuned classes
-    const tuneBranch = (root, {
-        exclude = [],
-        offsetAdd = 2,
-        multipliers = {}
-    } = {}) => {
-        const visited = new Set();
-        const excluded = new Set(exclude.filter(Boolean));
-        const {
-            damage = 1,
-            pen = 1,
-            health = 1,
-            density = 1,
-            size = 1
-        } = multipliers;
-        const tuneShootSettings = (stats) => {
-            if (!stats || typeof stats !== 'object') return;
-            if (Number.isFinite(stats.damage)) stats.damage *= damage;
-            if (Number.isFinite(stats.pen)) stats.pen *= pen;
-            if (Number.isFinite(stats.health)) stats.health *= health;
-            if (Number.isFinite(stats.density)) stats.density *= density;
-            if (Number.isFinite(stats.size)) stats.size *= size;
-        };
-        const tuneTank = (tank) => {
-            if (!tank || visited.has(tank)) return;
-            visited.add(tank);
-            if (excluded.has(tank)) return;
-            if (Array.isArray(tank.GUNS)) {
-                for (const gun of tank.GUNS) {
-                    if (!gun || !Array.isArray(gun.POSITION) || gun.POSITION.length < 4) continue;
-                    if (!(gun.PROPERTIES && gun.PROPERTIES.SHOOT_SETTINGS)) continue;
-                    if (Number.isFinite(gun.POSITION[3])) gun.POSITION[3] += offsetAdd;
-                    tuneShootSettings(gun.PROPERTIES.SHOOT_SETTINGS);
-                }
-            }
-            for (const key in tank) {
-                if (!key.startsWith('UPGRADES_TIER_')) continue;
-                if (!Array.isArray(tank[key])) continue;
-                for (const next of tank[key]) tuneTank(next);
-            }
-        };
-        tuneTank(root);
-    };
-    tuneBranch(defExport.destroyer, {
-        // Destroyer pass should not bleed into Annihilator branch.
-        exclude: [defExport.annihilator, defExport.bigMac, defExport.anniSteamroll, defExport.overload],
-        offsetAdd: 2,
-        multipliers: {
-            damage: 0.83,
-            pen: 0.88,
-            health: 0.88,
-            density: 0.90,
-            size: 1
-        }
-    });
-    tuneBranch(defExport.annihilator, {
-        // Keep higher-tier cousins (Big Mac, Flattener) untouched.
-        exclude: [defExport.bigMac, defExport.anniSteamroll, defExport.overload],
-        offsetAdd: 2,
-        multipliers: {
-            damage: 0.90,
-            pen: 0.92,
-            health: 0.92,
-            density: 0.93,
-            size: 1
-        }
-    });
-}
+
 {
     // Builder/Constructor branch forward-offset tuning:
     // +2 for all branch classes except Constructor and Manufacturer.
