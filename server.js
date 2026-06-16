@@ -4915,7 +4915,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           y: t.y + i * Math.sin(s),
         };
       },
-      getProjectilePointBlankDamageMultiplier = (e, t) => {
+ getProjectilePointBlankDamageMultiplier = (e, t) => {
         if (!e || !t) return 1;
         if (!projectilePointBlankTypes.has(e.type) || isProjectileFromMinion(e))
           return 1;
@@ -4926,22 +4926,23 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           o = Math.sqrt(i * i + a * a),
           r = getEntityRoot(e.source || e.master || e),
           n = r && Number.isFinite(r.size) ? r.size : e.size,
+          // same distance threshold but you can reduce it to make point‑blank region smaller
           l = Math.max(t.size + 0.9 * n, 4);
         if (o >= l) return 1;
-        let h = util.clamp(1 - o / l, 0, 1),
-          d = 1 + 0.45 * h,
-          c = (
-            (r && r.label) ||
-            (e.source && e.source.label) ||
-            e.label ||
-            ""
+        let h = util.clamp(1 - o / l, 0, 1);
+        // Reduced base point-blank strength (was 0.45)
+        let d = 1 + 0.11 * h;
+        let c =
+          ((r && r.label) || (e.source && e.source.label) || e.label || ""
           ).toLowerCase();
         if (c.includes("destroyer")) {
+          // reduce destroyer extra (was 1.05 * Math.pow(s,1.4))
           let e = Math.max(t.size + 0.35 * n, 2),
             s = util.clamp(1 - o / e, 0, 1);
-          d += 1.05 * Math.pow(s, 1.4);
+          d += 0.6 * Math.pow(s, 1.3);
         }
-        return d;
+        // final clamp to avoid large multipliers (adjust cap as needed)
+        return Math.min(d, 1.5);
       },
       // If a large annihilator projectile overlaps multiple entities, distribute damage equally.
       distributeAnnihilatorClusterDamage = (proj, targets) => {

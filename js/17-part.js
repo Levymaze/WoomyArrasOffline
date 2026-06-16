@@ -6571,7 +6571,7 @@ defExport.destroyer = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [30, 14, 1, 0, 0, 0, 0],
+        POSITION: [27, 14, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy]),
             TYPE: defExport.bullet
@@ -6587,9 +6587,9 @@ defExport.annihilator = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [27, 19.5, 1, 0, 0, 0, 0],
+        POSITION: [23, 19.5, 1, 0, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.less_recoil]),
             TYPE: defExport.bullet
         }
     }]
@@ -34784,11 +34784,11 @@ defExport.anniSteamroll = {
         FOV: 1.2
     },
     GUNS: [{
-        POSITION: [21, 11.5, 1, 0, 0, 0, 0]
+        POSITION: [18, 11.5, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [14, 20, 1.01, 16, 0, 0, 0],
+        POSITION: [12, 20, 1.01, 16, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam, g.more_power]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam, g.less_recoil]),
             TYPE: defExport.bullet
         }
     }]
@@ -35700,7 +35700,7 @@ defExport.megaConstruct = {
     }, {
         POSITION: [2, 26, 1.2, 18, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.decalibrate, g.more_range, [1, 1, 1, 1, 1, 1.30, 1, 1, 1, 1, 1, 1, 1]]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.decalibrate, g.more_range, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]),
             TYPE: defExport.block
         }
     }]
@@ -59567,7 +59567,7 @@ defExport.snipeConstruct = {
     }, {
         POSITION: [2, 18, 1.2, 21, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.sniper, [1, 1, 1, 1, 1, 1.43, 1, 1, 1, 1, 1, 1, 1]]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.sniper, [1, 1, 1, 1, 1, 1.3, 1, 1, 1, 1, 1, 1, 1]]),
             TYPE: defExport.block
         }
     }]
@@ -97968,7 +97968,7 @@ defExport.overload = {
     GUNS: [{
         POSITION: [10, 19.5, 1.2, 34, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.drone, g.over, g.tiny_bit_more_speed, g.pound, g.destroy, g.anni, g.more_health, g.double_size, g.more_speed, g.triple_reload, g.very_fast_launch, g.bigger, g.very_little_bit_bigger]),
+            SHOOT_SETTINGS: combineStats([g.drone, g.over, g.tiny_bit_more_speed, g.pound, g.destroy, g.anni, g.more_health, g.double_size, g.more_speed, g.triple_reload, g.very_fast_launch, g.bigger, g.more_power]),
             TYPE: defExport.drone,
             AUTOFIRE: true,
             SYNCS_SKILLS: true,
@@ -141160,7 +141160,7 @@ defExport.bigMac = {
                 g.pound,
                 g.destroy,
                 g.anni,
-               [1.5, 1.8, 1, 1.65, 1.25, 1.25, 1.25, 0.7, 0.7, 0.4, 6, 0.3, 1.5]
+               [1.5, 1.8, 1, 1.65, 1.1, 1.1, 1.1, 0.7, 0.7, 0.4, 6, 0.3, 1.5]
             ]),
             TYPE: defExport.bullet
         }

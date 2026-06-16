@@ -27,8 +27,8 @@ const popup = document.getElementById("infoPopup");
         }
         function displayMission() {
             fadePopupIn()
-            popupTitle.textContent = "The Propose + GitHub Repo";
-            popupMessage.textContent = "This revival project is the result of many people wanting a game to play, but it being deleted. This isn't woomy-arras, and will never measure up to that level. However, it is supposed to be a space where people can hang out and play the game. \n GitHub: github.com/";
+            popupTitle.textContent = "The Propose";
+            popupMessage.textContent = "I started modding woomy for my own playing but a lot people asking that they want to try it out. The modded version with growth is now available to play on this domain";
         }
         function displayDisclaimer() {
             fadePopupIn()

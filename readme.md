@@ -5,13 +5,13 @@
 </p>
 
 <p align="center">
-  A community-driven offline fork featuring new gamemodes, developer tools, tank additions, balance changes, and quality-of-life improvements.
+  A Modded version of the 2d-tank shooting game Woomy-arras.io Offline.
 </p>
 
 ---
 
 > [!IMPORTANT]
-> I do **not** own the original Woomy-Arras codebase. This repository contains my own modifications to a project originally cloned from **@spade1345**.
+> I do **not** own the original Woomy-Arras codebase. This repository contains my own modifications.
 >
 > Many of the additions found in this version were created in response to community requests and gameplay experimentation. Some content has never existed in the original Woomy-Arras project and may not reflect its original design philosophy.
 >
@@ -74,8 +74,6 @@ A large collection of testing utilities has been added for developers, hosts, an
 | `V` | Create walls |
 | `T` | Change teams |
 
----
-
 ### Previously existing Developer Keybinds
 
 | Key | Action |
@@ -125,9 +123,9 @@ Numerous gameplay and backend improvements have been made throughout the project
 - General balance adjustments and oversight corrections
 
 > [!TIP]
-> If you plan on forking or modifying this project, many JavaScript files have been reorganized for easier navigation and maintenance.
+> Original code has been Optimized, Seperated and even minfied at some points. Only write code if you know how it works. AI's can damage server logic, use them  at your own risk. It is advised to commit or make back up copies of your progress if you modify this codebase.
 >
-> Some code exists in minified form.
+>
 
 ---
 
