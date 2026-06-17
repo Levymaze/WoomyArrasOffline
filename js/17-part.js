@@ -6587,7 +6587,7 @@ defExport.annihilator = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [23, 19.5, 1, 0, 0, 0, 0],
+        POSITION: [23.8, 19.5, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.less_recoil]),
             TYPE: defExport.bullet
@@ -97247,7 +97247,7 @@ defExport.maceEnd = {
     GUNS: [{
         POSITION: [1, 16, 1, 0, 0, 180, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.lance, g.less_power, g.less_pen, g.less_pen, g.less_pen]),
+            SHOOT_SETTINGS: combineStats([g.lance, g.less_power, g.less_pen, g.less_pen, g.less_pen, g.less_damage]),
             TYPE: [defExport.bullet, {
                 ALPHA: 0
             }],
@@ -138056,7 +138056,7 @@ defExport.spanner = {
             DRAW_Z: 31
         }
     }, {
-        POSITION: [40.5, 5, 1, 0, 0, 0, -10],
+        POSITION: [41.5, 5, 1, 0, 0, 0, -10],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.less_range, g.less_range]),
             TYPE: defExport.bullet,
@@ -141153,14 +141153,17 @@ defExport.bigMac = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [23.5, 16.5, 1, 18, 0, 0, 0],
+        POSITION: [23.5, 26.5, 1, 18, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([
                 g.basic,
                 g.pound,
                 g.destroy,
                 g.anni,
-               [1.5, 1.8, 1, 1.65, 1.1, 1.1, 1.1, 0.7, 0.7, 0.4, 6, 0.3, 1.5]
+                g.more_power,
+                g.more_power,
+                g.more_recoil,
+
             ]),
             TYPE: defExport.bullet
         }
