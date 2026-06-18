@@ -6571,7 +6571,7 @@ defExport.destroyer = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [27, 14, 1, 0, 0, 0, 0],
+        POSITION: [28, 14, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy]),
             TYPE: defExport.bullet
@@ -6587,7 +6587,7 @@ defExport.annihilator = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [23.8, 19.5, 1, 0, 0, 0, 0],
+        POSITION: [27.55, 19.5, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.less_recoil]),
             TYPE: defExport.bullet
@@ -6876,7 +6876,7 @@ defExport.spread = {
     }, {
         POSITION: [13, 8.5, 1.3, 8, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.spread_main, g.spread]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.spread_main, g.spread, g.more_reload, g.more_reload]),
             TYPE: defExport.bullet,
             LABEL: 'Primary'
         }
@@ -34784,9 +34784,9 @@ defExport.anniSteamroll = {
         FOV: 1.2
     },
     GUNS: [{
-        POSITION: [18, 11.5, 1, 0, 0, 0, 0]
+        POSITION: [19, 11.5, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [12, 20, 1.01, 16, 0, 0, 0],
+        POSITION: [13, 20, 1.01, 16, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam, g.less_recoil]),
             TYPE: defExport.bullet
@@ -56781,7 +56781,7 @@ defExport.supremeAnni = {
         SPEED: base.SPEED * .9
     },
     GUNS: [{
-        POSITION: [65, 19.5, 3, 0, 0, 0, 0],
+        POSITION: [70, 19.5, 3, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.decentralize, g.double_size, g.more_power, g.more_power, g.more_power]),
             TYPE: defExport.bullet
@@ -141153,7 +141153,7 @@ defExport.bigMac = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [23.5, 26.5, 1, 18, 0, 0, 0],
+        POSITION: [24.5, 26.5, 1, 18, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([
                 g.basic,
