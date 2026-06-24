@@ -545,6 +545,23 @@ const createGrowthSiegeV2RoomSetup = () => {
     for (const y of dominatorRows) map[y][dominatorX] = "domi";
     return map;
 };
+
+const classicBaseMode =
+    modes.find((entry => entry[1] && entry[1].serverName === "Free For All")) ||
+    modes.find((entry => entry[1] && "ffa" === entry[1].MODE)) ||
+    modes[0];
+if (classicBaseMode) {
+    const classicConfig = cloneModeConfig(classicBaseMode);
+    classicConfig.serverName = "Classic";
+    classicConfig.MODE = "ffa";
+    classicConfig.CLASSIC_MODE = true;
+    classicConfig.GROWTH_MODE = false;
+    classicConfig.testingMode = false;
+    classicConfig.modelMode = false;
+    classicConfig.BOTS = Math.max(24, Number(classicConfig.BOTS || 0));
+    modes.push(["classic", classicConfig]);
+}
+
 const growthBaseMode =
     modes.find((entry => entry[1] && entry[1].serverName === "Free For All")) ||
     modes.find((entry => entry[1] && "ffa" === entry[1].MODE)) ||

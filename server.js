@@ -132,7 +132,15 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       growthFfaSelected =
         "-growth" === serverPrefix || !0 === window.__growthModePolyfill,
       growthTestingSelected =
-        "-growthtesting" === serverPrefix || !0 === c.GROWTH_TESTING;
+        "-growthtesting" === serverPrefix || !0 === c.GROWTH_TESTING,
+      classicModeSelected =
+        "-classic" === serverPrefix || !0 === c.CLASSIC_MODE;
+    classicModeSelected &&
+      ((c.serverName = "Classic"),
+      (c.MODE = "ffa"),
+      (c.CLASSIC_MODE = !0),
+      (c.GROWTH_MODE = !1),
+      (c.BOTS = Math.max(24, Number(c.BOTS || 0))));
     growthFfaSelected &&
       ((c.serverName = "Growth"),
       (c.MODE = "ffa"),
@@ -1141,7 +1149,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         if (((a.color = 12), "tdm" === room.gameMode && Number.isFinite(i)))
           (a.team = -i), (a.color = [10, 12, 11, 15, 3, 35, 36, 0][i - 1]);
         let o = ran.choose(botTanks),
-          r = o.IS_SMASHER || o.IS_LANCER ? "bot2" : "bot",
+          classicBot = !!c.CLASSIC_MODE,
+          r = classicBot ? "bot" : o.IS_SMASHER || o.IS_LANCER ? "bot2" : "bot",
           n = o.IS_SMASHER
             ? [12, 12, 12, 12, 12, 12, 12, 12, 12, 12]
             : o.IS_LANCER
@@ -1155,8 +1164,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               ]);
         (a.isBot = !0),
           a.define(Class[r]),
-          (a.tank = o),
-          a.define(o),
+          (a.tank = classicBot ? Class.basic : o),
+          a.define(classicBot ? Class.basic : o),
           (a.name = ran.chooseBotName()),
           (a.nameColor = a.name.includes("Bee")
             ? "#FFF782"
@@ -1167,7 +1176,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             : "#FFFFFF") /* BOT TAG ORIGINAL COLOR: #c1caff */,
           (a.autoOverride = !0),
           (a.invuln = !0),
-          (a.skill.score = 59212),
+          (a.skill.score = classicBot ? 0 : 59212),
           setTimeout(() => {
             (a.invuln = !1),
               (a.autoOverride = !1),
@@ -1179,6 +1188,19 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               a.skill.maintain(),
               a.refreshBodyAttributes(),
               a.skill.set(n),
+              classicBot &&
+                (a.classicUpgradeInterval = setInterval(() => {
+                  if (!a || a.isGhost || !a.skill)
+                    return clearInterval(a.classicUpgradeInterval);
+                  for (let e = 0; e++ < 20 && a.skill.maintain(); );
+                  if (a.upgrades && a.upgrades.length) {
+                    const e = a.upgrades.filter(
+                      (e) => e && e.tier <= 4 && a.skill.level >= e.level
+                    );
+                    e.length && a.upgrade(a.upgrades.indexOf(ran.choose(e)));
+                  }
+                  a.refreshBodyAttributes && a.refreshBodyAttributes();
+                }, 2500)),
               a.controllers.push(new ioTypes.roamWhenIdle(a)),
               c.GROWTH_SIEGE_V2 &&
                 a.controllers.push(
@@ -5548,6 +5570,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               index: t.index,
               tier: 4,
             });
+        c.CLASSIC_MODE &&
+          (this.upgrades = this.upgrades.filter((e) => !e || e.tier <= 4));
         if (null != e.GUNS) {
           let t = [];
           for (let s of e.GUNS) t.push(new Gun(this, s));
@@ -6614,6 +6638,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 index: t.index,
                 tier: 4,
               });
+          c.CLASSIC_MODE &&
+            (this.upgrades = this.upgrades.filter((e) => !e || e.tier <= 4));
           if (
             (null != e.SIZE &&
               ((this.SIZE = e.SIZE * this.squiggle),
@@ -6623,7 +6649,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             if (10 !== e.SKILL.length) throw "Invalid skill raws!";
             this.skill.set(e.SKILL);
           }
-          if (null != e.LEVEL) {
+          if (null != e.LEVEL && !(c.CLASSIC_MODE && (this.isPlayer || this.isBot))) {
             for (
               -1 === e.LEVEL && this.skill.reset();
               this.skill.level < c.SKILL_CHEAT_CAP &&
@@ -7005,6 +7031,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         return t;
       }
       upgrade(e) {
+        if (
+          c.CLASSIC_MODE &&
+          this.upgrades[e] &&
+          this.upgrades[e].tier > 4
+        )
+          return;
         if (
           e < this.upgrades.length &&
           this.skill.level >= this.upgrades[e].level
@@ -9967,6 +9999,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   );
                 null != a &&
                   !a.underControl &&
+                  (!c.CLASSIC_MODE || (this.betaData && this.betaData.permissions >= 1)) &&
                   a.skill.level < c.SKILL_CHEAT_CAP &&
                   ((a.skill.score += a.skill.levelScore),
                   a.skill.maintain(),
@@ -11532,7 +11565,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 "You will remain invulnerable until you move, shoot, or your timer runs out."
               ),
               a.sendMessage(
-                "You have spawned! Welcome to the game. Hold N to level up."
+                c.CLASSIC_MODE
+                  ? "You have spawned in Classic. Earn score from shapes and kills to level up."
+                  : "You have spawned! Welcome to the game. Hold N to level up."
               ),
               this.talk("c", this.camera.x, this.camera.y, this.camera.fov),
               t
