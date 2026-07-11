@@ -3288,7 +3288,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 y: o,
               };
             }
-
+            this.timer++;
+            return i;
           }
         }
       }),
@@ -9550,7 +9551,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       (i.command.right = (8 & t) >> 3),
                       (i.command.lmb = (16 & t) >> 4),
                       (i.command.mmb = (32 & t) >> 5),
-                      (i.command.rmb = (64 & t) >> 6));
+                      (i.command.rmb = (64 & t) >> 6),
+                      i.command.reverseMouse &&
+                        ([i.command.lmb, i.command.rmb] = [
+                          i.command.rmb,
+                          i.command.lmb,
+                        ]));
                   if (o && 3 === this.betaData.permissions && this.mazeWallEdit) {
                     let t = entities.find((e) => e.id === this.mazeWallEdit.id);
                     if (!t || t.isGhost || "mazeWall" !== t.type)
@@ -9598,6 +9604,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     case 2:
                       e = "override";
                       break;
+                    case 3:
+                      e = "reverseMouse";
+                      break;
                     default:
                       return (
                         this.error(
@@ -9611,9 +9620,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   null != i.command &&
                     ((i.command[e] = !i.command[e]),
                     a.sendMessage(
-                      e.charAt(0).toUpperCase() +
-                        e.slice(1) +
-                        (i.command[e] ? ": ON" : ": OFF")
+                      "reverseMouse" === e
+                        ? i.command.reverseMouse
+                          ? "Reverse mouse enabled"
+                          : "Reverse mouse disabled"
+                        : e.charAt(0).toUpperCase() +
+                            e.slice(1) +
+                            (i.command[e] ? ": ON" : ": OFF")
                     ));
                 }
                 break;
@@ -11543,6 +11556,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 autofire: !1,
                 autospin: !1,
                 override: !1,
+                reverseMouse: !1,
               }),
               (t.records = (() => {
                 let e = util.time();
@@ -11568,7 +11582,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 "You will remain invulnerable until you move, shoot, or your timer runs out."
               ),
               a.sendMessage(
-                "You have spawned! Welcome to the game. Hold N to level up."
+                "You have spawned! Welcome to the game. Hold N to level up. (if you are a devloper press J)"
               ),
               this.talk("c", this.camera.x, this.camera.y, this.camera.fov),
               t
@@ -12320,9 +12334,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   ? ((e.SIZE += 7), t.kill())
                   : ((t.SIZE += 7), e.kill());
               };
-            return (i) => {
-              let a = i[0],
-                o = i[1];
+            return (a, o) => {
               if (a.isGhost || o.isGhost) {
                 let e = a.isGhost ? a : o;
                 return (
@@ -12851,8 +12863,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             entities.length > 1)
           ) {
             (room.wallCollisions = []), grid.update();
-            global.MyProfiler.start('queryForCollisionPairs'); let t = grid.queryForCollisionPairs(); global.MyProfiler.end('queryForCollisionPairs', t.length);
-            global.MyProfiler.start('collision resolution'); for (let s of chunkar(t, 400)) for (let t of s) e(t); global.MyProfiler.end('collision resolution', Array.isArray(t) ? t.length : 0);
+            global.MyProfiler.start('collision resolution');
+            let count = 0;
+            grid.queryForCollisionPairs((a, o) => {
+              count++;
+              e(a, o);
+            });
+            global.MyProfiler.end('collision resolution', count);
           }
           newLogs.collision.stop(), logs.collide.mark(), logs.entities.set();
           global.MyProfiler.start('entity update loop'); let pCount = 0; for (let e = 0, s = entities.length; e < s; e++) {     let ent = entities[e];     let isProj = (ent.type === 'bullet' || ent.type === 'drone' || ent.type === 'swarm');     if (isProj) global.MyProfiler.start('projectile updates');     t(ent);     if (isProj) { global.MyProfiler.end('projectile updates', 1); pCount++; } } global.MyProfiler.end('entity update loop', entities.length);

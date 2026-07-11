@@ -41,6 +41,7 @@ const popup = document.getElementById("infoPopup");
             popupMessage.innerText = `
             E - Autofire \n
             C - Autospin \n
+            O - Reverse mouse \n
             R - Turret/Drone Override \n
             N - Level Up \n
             M+<stat number> - Max out that stat \n

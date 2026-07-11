@@ -7098,7 +7098,7 @@
                             KEY_DEBUG: 76,
                             // Rebound so U can be used for dev-token score decrement.
                             KEY_CLASS_TREE: 219,
-                            KEY_TIER_SWITCH: 79,
+                            KEY_REVERSE_MOUSE: 79,
                             KEY_TIER_SWITCH_2: 81,
                             KEY_OVERRIDE_MULTIBOX: 86,
                             KEY_SUBMERGE: 190,
@@ -7134,6 +7134,7 @@
                             tipSplash: [
                                 "Press the E key to enable autofire.",
                                 "Press the C key to enable autospin.",
+                                "Press the O key to toggle reverse mouse.",
                                 "Press the R key to disable drone and auto turret AI.",
                                 "Hold the N key to level up.",
                                 "Hold the Z key to change the color of the upgrade menu.",
@@ -7684,6 +7685,9 @@
                                         case global.KEY_OVER_RIDE:
                                             this.parent.socket.talk("t", 2);
                                             break;
+                                        case global.KEY_REVERSE_MOUSE:
+                                            this.parent.socket.talk("t", 3);
+                                            break;
                                         case global.KEY_SUBMERGE:
                                             this.parent.socket.talk('sub', 0);
                                             break;
@@ -7727,7 +7731,6 @@
                                         case global.KEY_RAINBOW_2:
                                             this.parent.socket.talk("T", 5);
                                             break;
-                                        case global.KEY_TIER_SWITCH:
                                         case global.KEY_TIER_SWITCH_2:
                                             this.parent.socket.talk("X");
                                             break;

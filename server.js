@@ -3252,7 +3252,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 y: o,
               };
             }
-
+            this.timer++;
+            return i;
           }
         }
       }),
@@ -4931,7 +4932,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         if (o >= l) return 1;
         let h = util.clamp(1 - o / l, 0, 1);
         // Reduced base point-blank strength (was 0.45)
-        let d = 1 + 0.11 * h;
+        let d = 1 + 0.05 * h;
         let c =
           ((r && r.label) || (e.source && e.source.label) || e.label || ""
           ).toLowerCase();
@@ -9514,7 +9515,12 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       (i.command.right = (8 & t) >> 3),
                       (i.command.lmb = (16 & t) >> 4),
                       (i.command.mmb = (32 & t) >> 5),
-                      (i.command.rmb = (64 & t) >> 6));
+                      (i.command.rmb = (64 & t) >> 6),
+                      i.command.reverseMouse &&
+                        ([i.command.lmb, i.command.rmb] = [
+                          i.command.rmb,
+                          i.command.lmb,
+                        ]));
                   if (o && 3 === this.betaData.permissions && this.mazeWallEdit) {
                     let t = entities.find((e) => e.id === this.mazeWallEdit.id);
                     if (!t || t.isGhost || "mazeWall" !== t.type)
@@ -9562,6 +9568,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     case 2:
                       e = "override";
                       break;
+                    case 3:
+                      e = "reverseMouse";
+                      break;
                     default:
                       return (
                         this.error(
@@ -9575,9 +9584,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   null != i.command &&
                     ((i.command[e] = !i.command[e]),
                     a.sendMessage(
-                      e.charAt(0).toUpperCase() +
-                        e.slice(1) +
-                        (i.command[e] ? ": ON" : ": OFF")
+                      "reverseMouse" === e
+                        ? i.command.reverseMouse
+                          ? "Reverse mouse enabled"
+                          : "Reverse mouse disabled"
+                        : e.charAt(0).toUpperCase() +
+                            e.slice(1) +
+                            (i.command[e] ? ": ON" : ": OFF")
                     ));
                 }
                 break;
@@ -11507,6 +11520,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 autofire: !1,
                 autospin: !1,
                 override: !1,
+                reverseMouse: !1,
               }),
               (t.records = (() => {
                 let e = util.time();
