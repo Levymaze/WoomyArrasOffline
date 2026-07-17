@@ -157,7 +157,7 @@ This build now supports an optional browser-hosted multiplayer lobby so the same
    npm start
    ```
 
-3. Open the host URL, replacing `myroom` with a private room name. Do **not** use only `#x`; the multiplayer role and room must be in the query string, or selected with the menu's **Host Multiplayer** / **Join Multiplayer** buttons:
+3. Open the host URL, replacing `myroom` with a private room name:
 
    ```text
    http://localhost:3000/?multiplayer=host&room=myroom
@@ -165,7 +165,7 @@ This build now supports an optional browser-hosted multiplayer lobby so the same
 
 4. Pick any gamemode from the normal menu, including Growth FFA, Growth Maze, Growth TDM, Growth Siege variants, Testing, Development, Boss Rush, Domination, Mothership, Maze, and the other existing offline options, then press **Play**.
 
-5. Share the join URL with friends. If they are not on your machine, replace `localhost` with your LAN IP or public tunnel/domain. For example, a Cloudflare Tunnel invite should look like `https://your-tunnel.trycloudflare.com/?multiplayer=join&room=myroom`, not `https://your-tunnel.trycloudflare.com/#x`:
+5. Share the join URL with friends. If they are not on your machine, replace `localhost` with your LAN IP or public tunnel/domain:
 
    ```text
    http://localhost:3000/?multiplayer=join&room=myroom

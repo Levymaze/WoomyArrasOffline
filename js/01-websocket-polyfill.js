@@ -74,11 +74,9 @@ window.__websocketPolyfill = {
     const NativeWebSocket = window.__NativeWebSocket || window.WebSocket;
     window.__woomyMultiplayer = (() => {
         const params = new URLSearchParams(window.location.search);
-        const hashText = window.location.hash && window.location.hash.slice(1).includes("=") ? window.location.hash.slice(1) : "";
-        const hashParams = new URLSearchParams(hashText);
-        const role = params.get("multiplayer") || params.get("mp") || hashParams.get("multiplayer") || hashParams.get("mp") || "offline";
-        const room = params.get("room") || hashParams.get("room") || localStorage.getItem("woomyMultiplayerRoom") || Math.random().toString(36).slice(2, 8);
-        const relayUrl = params.get("relay") || hashParams.get("relay") || ((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/multiplayer");
+        const role = params.get("multiplayer") || params.get("mp") || "offline";
+        const room = params.get("room") || localStorage.getItem("woomyMultiplayerRoom") || Math.random().toString(36).slice(2, 8);
+        const relayUrl = params.get("relay") || ((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/multiplayer");
         if (room) localStorage.setItem("woomyMultiplayerRoom", room);
         return { role, room, relayUrl, clients: {}, relay: null, connected: false };
     })();
