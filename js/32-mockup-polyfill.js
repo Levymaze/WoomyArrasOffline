@@ -2504,6 +2504,44 @@
                             };
                             util.retrieveFromLocalStorage("playerNameInput");
                             util.retrieveFromLocalStorage("playerKeyInput");
+                            (function setupMultiplayerMenu() {
+                                const playerInputs = document.querySelector(".playerInputsContainer");
+                                if (!playerInputs || document.getElementById("multiplayerRoomInput")) return;
+                                const mp = window.__woomyMultiplayer || {};
+                                const wrapper = document.createElement("div");
+                                wrapper.className = "miniWrapper";
+                                wrapper.style.gap = "4px";
+                                wrapper.style.marginTop = "6px";
+                                wrapper.innerHTML = '<input class="playerInput" id="multiplayerRoomInput" placeholder="Room name" value="' + String(mp.room || "woomyfriends").replace(/"/g, "&quot;") + '"><button id="hostMultiplayerButton" class="playerButton">Host Multiplayer</button><button id="joinMultiplayerButton" class="playerButton">Join Multiplayer</button><button id="copyInviteButton" class="playerButton">Copy Invite</button><p id="multiplayerStatusText" style="color: yellow; font-size: 11px; font-weight: 700; max-width: 260px;">' + (mp.role === "host" ? "Hosting room: " : mp.role === "join" ? "Joining room: " : "Offline mode. Host or join before pressing Play.") + (mp.role === "offline" ? "" : String(mp.room || "")) + '</p>';
+                                playerInputs.appendChild(wrapper);
+                                const roomInput = document.getElementById("multiplayerRoomInput");
+                                const status = document.getElementById("multiplayerStatusText");
+                                function cleanRoom() {
+                                    const room = String(roomInput.value || "woomyfriends").trim().replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64) || "woomyfriends";
+                                    roomInput.value = room;
+                                    localStorage.setItem("woomyMultiplayerRoom", room);
+                                    return room;
+                                }
+                                function multiplayerUrl(role) {
+                                    const room = cleanRoom();
+                                    const url = new URL(location.href);
+                                    url.searchParams.set("multiplayer", role);
+                                    url.searchParams.set("room", room);
+                                    url.hash = "";
+                                    return url.toString();
+                                }
+                                document.getElementById("hostMultiplayerButton").onclick = function () {
+                                    location.href = multiplayerUrl("host");
+                                };
+                                document.getElementById("joinMultiplayerButton").onclick = function () {
+                                    location.href = multiplayerUrl("join");
+                                };
+                                document.getElementById("copyInviteButton").onclick = function () {
+                                    const invite = multiplayerUrl("join");
+                                    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(invite);
+                                    status.textContent = "Invite link: " + invite;
+                                };
+                            })();
                             const gamemodeSelect = document.getElementById("gamemode");
                             const teamSelectButton = document.getElementById("teamSelectButton");
                             const gamemodeStorageKey = "woomyGamemode";
@@ -2589,7 +2627,8 @@
                                 }
                                 window.__gamemodePolyfill = "-" + selectedMode
                                 window.__growthModePolyfill = selectedMode === "growth";
-                                if (!window.__woomyServerLoaded) {
+                                const multiplayerRole = window.__woomyMultiplayer && window.__woomyMultiplayer.role;
+                                if (multiplayerRole !== "join" && !window.__woomyServerLoaded) {
                                     let scrpt = document.createElement("script")
                                     scrpt.src = "./server.js?v=20260224a"
                                     document.head.appendChild(scrpt)

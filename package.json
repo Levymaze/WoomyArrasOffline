@@ -1,0 +1,12 @@
+{
+  "name": "woomy-arras-offline-multiplayer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LAN/online relay host for Woomy Arras Offline multiplayer lobbies.",
+  "scripts": {
+    "start": "node multiplayer-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

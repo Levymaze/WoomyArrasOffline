@@ -14321,12 +14321,14 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         );
       })();
     if (
-      ((window.connectToGame = () => {
-        sockets.connect(
-          __websocketPolyfill.client.sockets["ws://localhost:3001/"],
-          {
-            headers: {},
-          }
+      ((window.connectRemoteToGame = (socket) => {
+        sockets.connect(socket, {
+          headers: {},
+        });
+      }),
+      (window.connectToGame = () => {
+        window.connectRemoteToGame(
+          __websocketPolyfill.client.sockets["ws://localhost:3001/"]
         );
       }),
       setInterval(abilityLoop, 7.5 * room.cycleSpeed),
