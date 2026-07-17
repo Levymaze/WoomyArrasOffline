@@ -2589,7 +2589,8 @@
                                 }
                                 window.__gamemodePolyfill = "-" + selectedMode
                                 window.__growthModePolyfill = selectedMode === "growth";
-                                if (!window.__woomyServerLoaded) {
+                                const multiplayerRole = window.__woomyMultiplayer && window.__woomyMultiplayer.role;
+                                if (multiplayerRole !== "join" && !window.__woomyServerLoaded) {
                                     let scrpt = document.createElement("script")
                                     scrpt.src = "./server.js?v=20260224a"
                                     document.head.appendChild(scrpt)

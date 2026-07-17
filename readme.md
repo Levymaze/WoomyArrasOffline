@@ -136,3 +136,47 @@ This project remains under active development.
 More than **13 unreleased features** have already been implemented and are intentionally not documented here yet. Additional content, balancing changes, gamemodes, and developer tools may continue to be added over time.
 
 Contributions, experimentation, bug reports, and community feedback are always welcome.
+
+---
+
+## Multiplayer Lobbies
+
+This build now supports an optional browser-hosted multiplayer lobby so the same offline game logic, tanks, developer/testing tools, and every existing gamemode can be shared with friends. The host tab remains the authoritative game server, so the online lobby runs the same `server.js` logic that offline play already uses, including Growth modes and Growth hybrids.
+
+### Host a Lobby
+
+1. Install dependencies once:
+
+   ```bash
+   npm install
+   ```
+
+2. Start the relay/static web server:
+
+   ```bash
+   npm start
+   ```
+
+3. Open the host URL, replacing `myroom` with a private room name:
+
+   ```text
+   http://localhost:3000/?multiplayer=host&room=myroom
+   ```
+
+4. Pick any gamemode from the normal menu, including Growth FFA, Growth Maze, Growth TDM, Growth Siege variants, Testing, Development, Boss Rush, Domination, Mothership, Maze, and the other existing offline options, then press **Play**.
+
+5. Share the join URL with friends. If they are not on your machine, replace `localhost` with your LAN IP or public tunnel/domain:
+
+   ```text
+   http://localhost:3000/?multiplayer=join&room=myroom
+   ```
+
+### Lobby Size
+
+The relay accepts up to 10 remote guests per room, which is enough for 5–10 friends plus the host. Extra guests receive a lobby-full error instead of overloading the browser-hosted server.
+
+### Notes
+
+- Offline single-player is unchanged: open `index.html` normally or browse to `http://localhost:3000/` without multiplayer query parameters.
+- The host chooses the mode; guests join the host's current lobby and receive the same world state/features.
+- For internet play, forward port `3000` or use a tunnel such as Cloudflare Tunnel/ngrok. For LAN play, friends can use the host computer's local IP address.
