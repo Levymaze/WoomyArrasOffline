@@ -2504,6 +2504,70 @@
                             };
                             util.retrieveFromLocalStorage("playerNameInput");
                             util.retrieveFromLocalStorage("playerKeyInput");
+                            (function setupMultiplayerMenu() {
+                                const playerInputs = document.querySelector(".playerInputsContainer");
+                                if (!playerInputs) return;
+                                const mp = window.__woomyMultiplayer || {};
+                                let wrapper = document.getElementById("multiplayerLobbyControls");
+                                if (!wrapper) {
+                                    wrapper = document.createElement("div");
+                                    wrapper.id = "multiplayerLobbyControls";
+                                    wrapper.className = "miniWrapper";
+                                    wrapper.style.gap = "4px";
+                                    wrapper.style.marginTop = "8px";
+                                    wrapper.style.padding = "6px";
+                                    wrapper.style.border = "1px solid rgba(255,255,255,0.35)";
+                                    wrapper.style.borderRadius = "8px";
+                                    wrapper.innerHTML = '<p style="color: white; font-size: 12px; font-weight: 900; width: 100%;">Multiplayer Lobby</p><input class="playerInput" id="multiplayerRoomInput" placeholder="Room ID"><button id="hostMultiplayerButton" class="playerButton">Host This Gamemode</button><button id="joinMultiplayerButton" class="playerButton">Join Room</button><button id="copyInviteButton" class="playerButton">Copy Friend Invite</button><p id="multiplayerStatusText" style="color: yellow; font-size: 11px; font-weight: 700; max-width: 300px; user-select: text;"></p>';
+                                    playerInputs.appendChild(wrapper);
+                                }
+                                const roomInput = document.getElementById("multiplayerRoomInput");
+                                const status = document.getElementById("multiplayerStatusText");
+                                const initialRoom = String(mp.room || localStorage.getItem("woomyMultiplayerRoom") || ("room" + Math.random().toString(36).slice(2, 8))).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64) || "woomyfriends";
+                                roomInput.value = initialRoom;
+                                function cleanRoom() {
+                                    const room = String(roomInput.value || "").trim().replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64) || ("room" + Math.random().toString(36).slice(2, 8));
+                                    roomInput.value = room;
+                                    localStorage.setItem("woomyMultiplayerRoom", room);
+                                    return room;
+                                }
+                                function multiplayerUrl(role) {
+                                    const room = cleanRoom();
+                                    const url = new URL(location.href);
+                                    url.searchParams.set("multiplayer", role);
+                                    url.searchParams.set("room", room);
+                                    url.hash = "";
+                                    return url.toString();
+                                }
+                                function inviteUrl() {
+                                    return multiplayerUrl("join");
+                                }
+                                function updateStatus() {
+                                    if (!status) return;
+                                    if (mp.role === "host") {
+                                        status.textContent = "Hosting room " + cleanRoom() + ". Pick a gamemode, press Play, then share: " + inviteUrl();
+                                    } else if (mp.role === "join") {
+                                        status.textContent = "Joining room " + cleanRoom() + ". Press Play after the host starts.";
+                                    } else if (location.hash && location.hash.length > 1) {
+                                        status.textContent = "#" + location.hash.slice(1) + " is only the server/menu hash. Click Host This Gamemode to change the URL into a real multiplayer room ID.";
+                                    } else {
+                                        status.textContent = "Offline mode. Type a Room ID, then click Host This Gamemode or Join Room.";
+                                    }
+                                }
+                                document.getElementById("hostMultiplayerButton").onclick = function () {
+                                    location.href = multiplayerUrl("host");
+                                };
+                                document.getElementById("joinMultiplayerButton").onclick = function () {
+                                    location.href = multiplayerUrl("join");
+                                };
+                                document.getElementById("copyInviteButton").onclick = function () {
+                                    const invite = inviteUrl();
+                                    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(invite);
+                                    status.textContent = "Copied friend invite: " + invite;
+                                };
+                                roomInput.oninput = updateStatus;
+                                updateStatus();
+                            })();
                             const gamemodeSelect = document.getElementById("gamemode");
                             const teamSelectButton = document.getElementById("teamSelectButton");
                             const gamemodeStorageKey = "woomyGamemode";
