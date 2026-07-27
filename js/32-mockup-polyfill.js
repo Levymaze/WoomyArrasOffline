@@ -2530,6 +2530,21 @@
                                     url.hash = "";
                                     return url.toString();
                                 }
+                                function inviteUrl() {
+                                    return multiplayerUrl("join");
+                                }
+                                function updateStatus() {
+                                    if (!status) return;
+                                    if (mp.role === "host") {
+                                        status.textContent = "Hosting room " + cleanRoom() + ". Pick a gamemode, press Play, then share: " + inviteUrl();
+                                    } else if (mp.role === "join") {
+                                        status.textContent = "Joining room " + cleanRoom() + ". Press Play after the host starts.";
+                                    } else if (location.hash && location.hash.length > 1) {
+                                        status.textContent = "#" + location.hash.slice(1) + " is only the server/menu hash. Click Host This Gamemode to change the URL into a real multiplayer room ID.";
+                                    } else {
+                                        status.textContent = "Offline mode. Type a Room ID, then click Host This Gamemode or Join Room.";
+                                    }
+                                }
                                 document.getElementById("hostMultiplayerButton").onclick = function () {
                                     location.href = multiplayerUrl("host");
                                 };
@@ -2537,10 +2552,12 @@
                                     location.href = multiplayerUrl("join");
                                 };
                                 document.getElementById("copyInviteButton").onclick = function () {
-                                    const invite = multiplayerUrl("join");
+                                    const invite = inviteUrl();
                                     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(invite);
-                                    status.textContent = "Invite link: " + invite;
+                                    status.textContent = "Copied friend invite: " + invite;
                                 };
+                                roomInput.oninput = updateStatus;
+                                updateStatus();
                             })();
                             const gamemodeSelect = document.getElementById("gamemode");
                             const teamSelectButton = document.getElementById("teamSelectButton");
