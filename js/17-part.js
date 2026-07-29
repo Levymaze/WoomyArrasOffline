@@ -97964,9 +97964,9 @@ defExport.overload = {
     STAT_NAMES: statNames.drone,
     MAX_CHILDREN: 1,
     GUNS: [{
-        POSITION: [10, 19.5, 1.2, 34, 0, 0, 0],
+        POSITION: [9, 19.5, 1.2, 34, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.drone, g.over, g.tiny_bit_more_speed, g.pound, g.destroy, g.anni, g.more_health, g.double_size, g.more_speed, g.triple_reload, g.very_fast_launch, g.bigger, g.more_power]),
+            SHOOT_SETTINGS: combineStats([g.drone, g.over, g.more_speed, g.pound, g.destroy, g.anni, g.more_health, g.double_size, g.more_speed, g.triple_reload, g.fast_launch, g.bigger, g.more_power, g.bigger]),
             TYPE: defExport.drone,
             AUTOFIRE: true,
             SYNCS_SKILLS: true,
