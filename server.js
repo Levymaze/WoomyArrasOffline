@@ -4169,15 +4169,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       return Math.max(1, e.size / t);
     };
     const getMegaTrapperGrowthRangeMult = (e) => {
-      if (!e || !e.growthData || !e.growthData.isGrowthApplied) return 1;
-      let t = getEntityRoot(e),
-        s = ((t && t.label) || e.label || "").toLowerCase().trim();
-      if (!isMegaTrapperLineClass(s)) return 1;
-      let i = getEntitySizeGrowthScale(e);
-      if (!Number.isFinite(i) || i <= 1) return 1;
-      // Growth-based trap range gain for mega trapper line only.
-      let a = 1 + 0.85 * (i - 1);
-      return Math.min(2.4, Math.max(1, a));
+      return 1;
     };
     const getGunClassLabel = (e) => {
       if (!e || !e.body) return "";
@@ -4815,7 +4807,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (e.growthData.speedMult = isTank
             ? Math.max(0.6, Math.min(1, 1 / (1 + 0.5 * s)))
             : 1),
-          (e.growthData.rangeMult = 1 + 0.35 * s),
+          (e.growthData.rangeMult = 1),
           // Growth size should not add free projectile damage.
           (e.growthData.damageMult = 1),
           (e.SIZE = e.growthData.baseSIZE + i),
@@ -12205,13 +12197,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                         t.shield.max && (r._me -= t.shield.getDamage(r._me)),
                           e.shield.max && (r._n -= e.shield.getDamage(r._n));
                         let n = e.health.getDamage(r._n, !1);
-                        (p._me = C._me
+                        (p._me = (C._me && t.health && e.health && t.health.max <= e.health.max)
                           ? 1
                           : n > e.health.amount
                           ? e.health.amount / n
                           : 1),
                           (n = t.health.getDamage(r._me, !1)),
-                          (p._n = C._n
+                          (p._n = (C._n && e.health && t.health && e.health.max <= t.health.max)
                             ? 1
                             : n > t.health.amount
                             ? t.health.amount / n
