@@ -4768,7 +4768,6 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         // Players/bots grow off absolute score; non-tanks grow off score gained since spawn.
         const isNonTank = !isTank;
         const nonTankSizeFactor = 0.75; // keep polygons/bosses from scaling too aggressively
-        const nonTankHealthFactor = 0.25; // "little" health buff
 
         e.growthData ||
           (e.growthData = {
@@ -4788,20 +4787,17 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
 
         let t = Math.max(0, e.skill.score || 0);
         let scoreForGrowth = isNonTank ? Math.max(0, t - (e.growthData.baseScore || 0)) : t;
-        let s =
-            (isNonTank ? nonTankSizeFactor : 1) *
+        let healthGrowth =
             growthMode.targetSizeGrowthAtScore *
             Math.pow(
               scoreForGrowth / growthMode.targetScoreForQuarterSize,
               growthMode.sizeGrowthExponent
             ),
+          s = (isNonTank ? nonTankSizeFactor : 1) * healthGrowth,
           i = e.growthData.baseSIZE * s;
         (e.growthData.sizeGain = i),
           (e.growthData.healthMult =
-            1 +
-            s *
-              growthMode.healthPerGrowth *
-              (isNonTank ? nonTankHealthFactor : 1)),
+            1 + healthGrowth * growthMode.healthPerGrowth),
           (e.growthData.barrelScale = 1 + s * growthMode.barrelPerGrowth),
           // Mild, noticeable mobility penalty for large Growth tanks.
           (e.growthData.speedMult = isTank

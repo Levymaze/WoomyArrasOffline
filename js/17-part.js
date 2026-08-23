@@ -6587,7 +6587,7 @@ defExport.annihilator = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [27.55, 19.5, 1, 0, 0, 0, 0],
+        POSITION: [26.95, 19.5, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.less_recoil]),
             TYPE: defExport.bullet
@@ -32406,9 +32406,9 @@ defExport.megaAnnihilator = {
         SPEED: base.SPEED * .9
     },
     GUNS: [{
-        POSITION: [21, 19.5, 1.2, 0, 0, 0, 0],
+        POSITION: [28.9, 19.5, 1.2, 0, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.decentralize]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.decentralize]),
             TYPE: [defExport.bullet, {
                 MOTION_TYPE: 'decentralize'
             }]
@@ -59650,15 +59650,15 @@ defExport.twinAnni = {
         SPEED: base.SPEED * .875
     },
     GUNS: [{
-        POSITION: [15, 17, 1, 6, 9.3, 0, 0],
+        POSITION: [25, 17, 1, 6, 9.3, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pound, g.destroy, g.anni, g.less_power]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pound, g.destroy, g.anni]),
             TYPE: defExport.bullet
         }
     }, {
-        POSITION: [15, 17, 1, 6, -9.3, 0, .5],
+        POSITION: [25, 17, 1, 6, -9.3, 0, .5],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pound, g.destroy, g.anni, g.less_power]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pound, g.destroy, g.anni]),
             TYPE: defExport.bullet
         }
     }, {
@@ -77422,7 +77422,7 @@ defExport.adaptor = {
         ACCELERATION: base.ACCEL * .65
     },
     GUNS: [{
-        POSITION: [18.5, 19.5, -1.205, 2, 0, 0, 0],
+        POSITION: [29, 19.5, -1.205, 2, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.mach, g.bit_less_reload, g.more_recoil]),
             TYPE: defExport.bullet
@@ -97033,7 +97033,7 @@ defExport.flailEnd = {
     GUNS: [{
         POSITION: [1, 16, 1, 0, 0, 180, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.lance, g.half_damage, g.less_power, g.bit_less_damage]),
+            SHOOT_SETTINGS: combineStats([g.lance]),
             TYPE: [defExport.bullet, {
                 LABEL: '',
                 ALPHA: 0
@@ -97245,7 +97245,7 @@ defExport.maceEnd = {
     GUNS: [{
         POSITION: [1, 16, 1, 0, 0, 180, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.lance, g.less_power, g.less_pen, g.less_pen, g.less_pen, g.less_damage, g.half_damage]),
+            SHOOT_SETTINGS: combineStats([g.lance]),
             TYPE: [defExport.bullet, {
                 ALPHA: 0
             }],
@@ -103454,13 +103454,13 @@ defExport.fatDevastator = {
         FOV: 1.25
     },
     GUNS: [{
-        POSITION: [23, 17, 1, 0, 0, 0, 0],
+        POSITION: [28, 17, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.hunter, g.hunter2]),
             TYPE: defExport.bullet
         }
     }, {
-        POSITION: [20, 19, 1, 0, 0, 0, .15],
+        POSITION: [25, 19, 1, 0, 0, 0, .15],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.hunter]),
             TYPE: defExport.bullet
@@ -110852,15 +110852,15 @@ defExport.guardianLauncher = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [18.5, 19.5, 1, 0, 0, 0, 0],
+        POSITION: [28, 19.5, 1, 0, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.bit_less_reload, g.bit_slow, g.less_health, g.less_damage]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.more_range, g.more_range, g.less_damage]),
             TYPE: defExport.guardianBullet
         }
     }, {
         POSITION: [3, 23, 1.2, 17.5, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.bit_less_reload, g.less_health, g.less_damage, g.bit_slow, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.fake]),
             TYPE: defExport.bullet
         }
     }, {
@@ -110871,7 +110871,7 @@ defExport.guardianLauncher = {
     }, {
         POSITION: [1, 16, 1, 0, 0, 180, 2.5],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.bit_less_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.fake]),
             TYPE: defExport.bullet,
             ALT_FIRE: true,
             ON_SHOOT: 'oxy'
@@ -133245,17 +133245,15 @@ defExport.eggQueenZero = {
 defExport.ruse = {
     PARENT: [defExport.genericTank],
     LABEL: "Ruse",
-    TOOLTIP: "You look like a Triplet, but you're not. Right click to fire your Annihilator barrel!",
     DANGER: 7,
     GUNS: [{
-        POSITION: [18, 19.75, 1, 0, 0, 0, 0],
+        POSITION: [29, 19.75, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.one_fifth_reload]),
             TYPE: defExport.bullet,
-            ALT_FIRE: true
         }
     }, {
-        POSITION: [21, 10, 1, 0, 0, 0, 0],
+        POSITION: [24.4, 10, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.flank, g.bit_more_spread]),
             TYPE: defExport.bullet
@@ -133411,14 +133409,14 @@ defExport.antipode = {
     }, {
         POSITION: [25.2, 19.5, 1, 0, 0, 180, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.more_recoil, g.more_recoil, g.more_reload]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_recoil, g.more_recoil]),
             TYPE: defExport.descenderBullet,
 
         }
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 185, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
 
@@ -133426,7 +133424,7 @@ defExport.antipode = {
     }, {
         POSITION: [18.25, 9, 1, 0, 0, 190, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.more_reload, g.fake]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.fake]),
             TYPE: defExport.bullet,
             COLOR: 9,
 
@@ -140949,16 +140947,16 @@ defExport.ultraSpawnerMinion = {
         SPEED: 2
     },
     GUNS: [{
-        POSITION: [7.5, 11, 0, 21, 0, 0, 0],
+        POSITION: [7, 11, 0, 21, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: {
-                reload: 45,
+                reload: 40,
                 recoil: 2.5,
                 shudder: 0.1,
                 size: 1.1,
-                health: 0.83,
-                damage: 0.82,
-                pen: 1,
+                health: 1,
+                damage: 1.1,
+                pen: 0.8,
                 speed: 2.8,
                 maxSpeed: 0.55,
                 range: 1.5,
@@ -141023,9 +141021,9 @@ defExport.ultraSpawnerChild = {
                 recoil: 2.8,
                 shudder: 0.1,
                 size: 1.5,
-                health: 0.8,
-                damage: 0.7,
-                pen: 0.5,
+                health: 0.85,
+                damage: 0.8,
+                pen: 0.6,
                 speed: 2.6,
                 maxSpeed: 0.6,
                 range: 1.5,
