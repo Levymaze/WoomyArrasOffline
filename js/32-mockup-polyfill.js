@@ -7244,13 +7244,26 @@
                                         index,
                                         tier = 0
                                     }) => {
+                                        // Some class definitions contain upgrade references that do not
+                                        // have a matching client mockup. Ignore only that broken branch so
+                                        // the rest of the upgrade tree can still be displayed.
+                                        let mockup = mockups[index];
+                                        if (!mockup) return {
+                                            width: 0,
+                                            height: 0
+                                        };
                                         tiles.push({
                                             x,
                                             y,
                                             colorIndex,
                                             index
                                         });
-                                        let upgrades = mockups[index].upgrades || [];
+                                        let upgrades = Array.isArray(mockup.upgrades) ? mockup.upgrades
+                                            .map(upgrade => Number.isInteger(upgrade) ? {
+                                                index: upgrade,
+                                                tier: tier + 1
+                                            } : upgrade)
+                                            .filter(upgrade => upgrade && mockups[upgrade.index]) : [];
                                         switch (tier) {
                                             case 5:
                                                 return {
@@ -7276,7 +7289,7 @@
                                             case 0: {
                                                 let xStart = x,
                                                     us = upgrades.map((u, i) => {
-                                                        let spacing = 2 * (u.tier - tier),
+                                                        let spacing = 2 * ((Number.isFinite(u.tier) ? u.tier : tier) - tier),
                                                             measure = measureSize(x, y + spacing, i, u);
                                                         if (upgrades.length) branches.push([{
                                                             x,
@@ -7297,13 +7310,19 @@
                                                     });
                                                 return {
                                                     width: us.map(r => r.width).reduce((a, b) => a + b, 0) || 1,
-                                                    height: 2 + Math.max(...us.map(r => r.height)),
+                                                    height: 2 + (us.length ? Math.max(...us.map(r => r.height)) : 0),
                                                 }
                                             }
+                                            default:
+                                                return {
+                                                    width: 1,
+                                                    height: 1
+                                                };
                                         }
                                     },
+                                    root = mockups.find(r => r && r.name === global.searchName) || mockups.find(Boolean),
                                     full = measureSize(0, 0, 0, {
-                                        index: mockups.find(r => r.name === global.searchName).index
+                                        index: root ? mockups.indexOf(root) : 0
                                     });
                                 global.parsedTreeData = [tiles, branches, full];
                                 console.log("Upgrade tree has been parsed and is ready to be rendered.")
