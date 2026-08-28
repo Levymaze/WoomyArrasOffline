@@ -135,4 +135,4 @@ This project remains under active development.
 
 More than **13 unreleased features** have already been implemented and are intentionally not documented here yet. Additional content, balancing changes, gamemodes, and developer tools may continue to be added over time.
 
-Contributions, experimentation, bug reports, and community feedback are always welcome.
+> This project is no longer open sourced
