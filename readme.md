@@ -1,7 +1,7 @@
 # Woomy-Arras Offline — Modded Edition
 
 <p align="center">
-  <img src="resources/background-logo.jpg" alt="Woomy-Arras Offline Banner" width="900">
+  <img src="background-logo.jpg" alt="Woomy-Arras Offline Banner" width="900">
 </p>
 
 <p align="center">
