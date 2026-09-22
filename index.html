@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html id=mainBody lang=en>
-<script src="js/01-websocket-polyfill.js"></script><script src="js/02-process-polyfill.js"></script><script src="js/03-require-polyfill.js"></script><script src="js/04-globals-polyfill.js"></script><script src="js/05-defs-export.js"></script><script src="js/06-boot-origin.js"></script><script src="js/07-mockup-polyfill.js"></script><script src="js/08-part.js"></script><script src="js/09-part.js"></script><script src="js/10-part.js"></script><script src="js/11-part.js"></script><script src="js/12-part.js"></script><script src="js/13-part.js"></script><script src="js/14-part.js"></script><script src="js/15-part.js"></script><script src="js/16-part.js"></script><script src="js/17-part.js"></script><script src="js/18-part.js"></script><script src="js/19-part.js"></script><script src="js/20-part.js?v=20260223c"></script><script src="js/21-part.js"></script><script src="js/22-part.js"></script>
-      <script src="js/23-part.js"></script><script src="js/24-part.js"></script><script src="js/25-part.js"></script><script src="js/26-tokens.js"></script><script src="js/27-tankgen-results.js"></script>
+<script src="js/01-websocket-polyfill.js"></script><script src="js/02-process-polyfill.js"></script><script src="js/03-require-polyfill.js"></script><script src="js/04-globals-polyfill.js"></script><script src="js/05-defs-export.js"></script><script src="js/06-boot-origin.js"></script><script src="js/07-mockup-polyfill.js"></script><script src="js/08-part.js"></script><script src="js/09-part.js"></script><script src="js/10-part.js"></script><script src="js/11-part.js"></script><script src="js/12-part.js"></script><script src="js/13-part.js"></script><script src="js/14-part.js"></script><script src="js/15-part.js"></script><script src="js/16-part.js"></script><script src="js/17-part.js?v=20260828f"></script><script src="js/18-part.js"></script><script src="js/19-part.js"></script><script src="js/20-part.js?v=20260223c"></script><script src="js/21-part.js"></script><script src="js/22-part.js"></script>
+      <script src="js/23-part.js"></script><script src="js/24-part.js"></script><script src="js/25-part.js"></script><script src="js/26-atlas.js"></script><script src="js/27-tankgen-results.js"></script>
       <meta charset=UTF-8>
       <meta content="no-cache, no-store, must-revalidate" http-equiv=Cache-Control>
       <meta content=no-cache http-equiv=Pragma>
       <meta content=0 http-equiv=Expires>
       <title>Woomy-Arras.io</title>
-      <meta content="width=device-width,initial-scale=1,maximum-scale=5,minimum-scale=1" name=viewport>
+      <meta content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" name=viewport>
       <meta content="This is not the original woomy arras offline, changes were made by Levymaze. Experience new tanks, Growth mode and new maps along with og maps and gamemodes." name=description>
       <meta content="index, follow" name=robots>
       <!-- Open Graph (used by Facebook, LinkedIn, many messengers) -->
@@ -90,7 +90,8 @@
     perspective: 1000;
     transform: translate3d(0, 0, 0);
     transform: translateZ(0);
-    image-rendering: optimizeSpeed
+    image-rendering: optimizeSpeed;
+    touch-action: none
   }
 
   .gameAreaWrapper {
@@ -444,7 +445,9 @@
     height: 100%;
     width: 100%;
     z-index: 20;
-    align-items: center
+    align-items: center;
+
+    padding: 0px;
   }
 
   .insideWrapper {
@@ -455,8 +458,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    width: 72%;
-    height: 65%;
+
     padding: 3%
   }
 
@@ -792,6 +794,170 @@
 
   }
 
+  .introduction {
+    align-items: stretch;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box
+  }
+
+  .introductionContent {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.2vw, 18px);
+    width: 100%;
+    box-sizing: border-box;
+    padding: clamp(16px, 2vw, 30px)
+  }
+
+  .introduction .patchnoteTitle {
+    width: auto;
+    margin: 0;
+    padding: 0 0 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, .3);
+    font-size: clamp(20px, 1.8vw, 30px);
+    line-height: 1.2
+  }
+
+  .introduction .patchnoteTime {
+    margin-top: 8px;
+    color: #ffe36b;
+    font-size: clamp(13px, 1vw, 16px);
+    font-weight: 700
+  }
+
+  .introduction .patchnoteBody {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding-left: 1.25em;
+    color: rgb(215, 215, 215);
+    font-size: clamp(14px, 1.05vw, 17px);
+    line-height: 1.55
+  }
+
+  .introduction .introHeading {
+    margin: 0;
+    color: var(--main-text-color);
+    font-size: clamp(15px, 1.15vw, 18px);
+    text-align: left
+  }
+
+  .introduction a {
+    color: #b889ff;
+    font-weight: 700
+  }
+
+  @media (max-width: 800px), (max-height: 600px) {
+    html,
+    body {
+      min-height: 100dvh
+    }
+
+    #optionsMenu,
+    #adminMenu {
+      width: min(92vw, 560px) !important;
+      height: min(82dvh, 760px) !important;
+      max-height: calc(100dvh - 24px);
+      padding: 12px;
+      margin: 6px;
+      box-sizing: border-box;
+      font-size: 16px
+    }
+
+    #optionsMenu>*,
+    #adminMenu>* {
+      font-size: 16px;
+      margin: 8px 0
+    }
+
+    #optionsMenu>input[type=text],
+    #optionsMenu>input[type=number],
+    #optionsMenu>select,
+    #adminMenu>input[type=number],
+    #adminMenu select {
+      min-height: 38px;
+      font-size: 16px
+    }
+
+    #optionsMenu>button,
+    #adminMenu>button {
+      min-height: 40px;
+      padding: 8px 10px;
+      font-size: 15px
+    }
+
+    .outsideWrapper {
+      justify-content: flex-start;
+      overflow-y: auto;
+      padding: 12px 0;
+      box-sizing: border-box
+    }
+
+    .insideWrapper {
+      width: min(94vw, 680px);
+      height: auto;
+      min-height: calc(100dvh - 24px);
+      padding: 0;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      gap: 12px
+    }
+
+    .introduction,
+    .middleWrapper,
+    .patchNotesHolder,
+    .underMenuHolder {
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      box-sizing: border-box;
+      margin: 0
+    }
+
+    .introductionContent {
+      padding: 14px
+    }
+
+    .middleWrapper {
+      padding: 18px 12px
+    }
+
+    .introduction .patchnoteTitle {
+      font-size: clamp(17px, 5vw, 22px)
+    }
+
+    .introduction .patchnoteTime {
+      font-size: clamp(11px, 3.3vw, 14px)
+    }
+
+    .introduction .patchnoteBody,
+    .introduction .introHeading {
+      font-size: clamp(12px, 3.5vw, 15px);
+      line-height: 1.4
+    }
+
+    .patchNotesHolder {
+      min-height: 260px
+    }
+
+    .patchNotesTitle,
+    .serversText,
+    .gamemodeText {
+      font-size: clamp(15px, 4vw, 19px)
+    }
+
+    .serversHolder>p,
+    .playerInput,
+    .playerButton,
+    .animationsInput,
+    .buttonsHolder>button {
+      font-size: clamp(13px, 3.5vw, 16px)
+    }
+  }
+
   .patchNotesNavHolder {
     flex-direction: row;
     align-items: center;
@@ -941,12 +1107,23 @@
     <div class=outsideWrapper>
 
       <div class=insideWrapper>
-
+      <section class="miniWrapper patchNotesHolder introduction" aria-labelledby="introductionTitle">
+        <div class="introductionContent">
+          <p class="patchnoteTitle" id="introductionTitle">Introduction<span class="patchnoteTime">This version has been modded by <a href="https://github.com/Levymaze" target="_blank" rel="noopener noreferrer">@Levymaze</a></span></p>
+          <ul class="patchnoteBody">
+            <li>Welcome to Woomy-arras.io Offline - Modded: a transformed version with Growth, Arms Race tanks, new modes, bug fixes, balance changes, and testing features.</li>
+          </ul>
+          <h4 class="introHeading">Background of Woomy Offline</h4>
+          <ul class="patchnoteBody">
+            <li>Woomy Offline lost its funding and was taken down. This codebase began as a copy of Drako Hyena's 2018 Woomy Arras Offline files.</li>
+          </ul>
+        </div>
+      </section>
         <div class="miniWrapper middleWrapper" style=flex-wrap:nowrap>
           <p class=serversText>
             <b>Woomy Arras</b>
           </p>
-            <p style="color: yellow; font-size: 12px; font-weight: 700;">Expect Frequent Updates!</p>
+            <p style="color: yellow; font-size: 10px; font-weight: 700;">Expect Frequent Updates!</p>
           <div class="miniWrapper serversContainer">
 
             <!-- <p class=serversText id=serversText>-->
@@ -970,7 +1147,7 @@
               <option value=growthtdm>Growth 4TDM
               <option value=growth2tdm>Growth 2TDM
               <option value=growthmazetdm>Growth Maze 4TDM
-              <option value=growthbossv2 disabled>Growth Siege (Broken)
+              <option value=growthbossv2>Growth Siege (broken)
               <option value=growthboss>Growth Boss Rush
               <option value=growthsolovteam>Growth Solo vs Team
               <option value=growthsolovteamcorners>Growth Solo vs Team (Corners)
@@ -1012,7 +1189,7 @@
 
         <div class="miniWrapper patchNotesHolder">
 
-          <p class=patchNotesTitle>Changelog</p>
+
           <iframe frameborder=0 title="Patch Notes" id=patchNotesIFrame onload='this.src||(this.src="./changelog.html?a="+Date.now()+"&type="+localStorage.menuType)' seamless>Patch notes should go here. If you see this message, then something went wrong!</iframe>
         </div>
         <div class="miniWrapper underMenuHolder">
@@ -1034,9 +1211,8 @@
               <button onclick=displayDisclaimer()>Disclaimer</button>
               <button onclick=displayControls()>Controls</button>
               <button onclick='openLink("An inventation to join the offical discord","https://discord.gg/SH2BYEXSGs")'>Discord</button>
-              <button onclick='openLink("A link to the offical world record sheet","https://docs.google.com/spreadsheets/d/1pWbywG5Gmcllv8fuvgikGVFR_RsEQNKMZ0Dn1SG0eoY/edit#gid=67864041")'>World Records</button>
-              <button onclick='openLink("A link to the offical google form to submit records","https://docs.google.com/forms/d/e/1FAIpQLSdZgE5BGVwoIp5UpFH5LoV2_95C6oDCQkcew2U0kCtmBcFgYw/viewform?usp=sf_link")'>Submit a record</button>
-              <button onclick='openLink("A link to the GitHub Repo for this game","https://github.com/")'>Github</button>
+
+              <button onclick='openLink("A link to the GitHub Repo for this game","https://github.com/Levymaze/woomyarrasoffline")'>Github</button>
               <button onclick='localStorage.menuType="old",location.reload()'>Old Menu</button>
             </div>
           </div>
@@ -1052,7 +1228,7 @@
       </div>
     </div>
   </div>
-  <script src="js/31-token-logic.js?v=20260223c"></script><script src="js/32-mockup-polyfill.js?v=20260223c"></script><script src="js/33-part.js"></script>
+  <script src="js/31-token-logic.js?v=20260828f"></script><script src="js/32-mockup-polyfill.js?v=20260828f"></script><script src="js/33-part.js"></script>
 
   <script src="js/34-ads.js"></script>
 

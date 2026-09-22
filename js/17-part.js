@@ -530,7 +530,7 @@ const makeAnimTank = (exportName, name, frame1, frame31, options = {}) => {
             ALT_FIRE: true,
             ON_FIRE: (gun, gunInfo) => {
                 for (let i = 1; i < 32; i++) setTimeout(() => {
-                    if (gun.body.master.isAlive()) gun.body.master.define(Class[`${exportName}${i}`]);
+                    if (gun.body.master.isAlive()) gun.body.master.define(defExport[`${exportName}${i}`]);
                 }, duration * i);
             }
         }
@@ -543,7 +543,7 @@ const makeAnimTank = (exportName, name, frame1, frame31, options = {}) => {
             ALT_FIRE: true,
             ON_FIRE: (gun, gunInfo) => {
                 for (let i = 1; i < 32; i++) setTimeout(() => {
-                    if (gun.body.master.isAlive()) gun.body.master.define(Class[`${exportName}${31 - i}`]);
+                    if (gun.body.master.isAlive()) gun.body.master.define(defExport[`${exportName}${31 - i}`]);
                 }, duration * i);
             }
         }
@@ -6656,9 +6656,9 @@ defExport.builder = {
     },
     STAT_NAMES: statNames.block,
     GUNS: [{
-        POSITION: [12, 12, 1, 0, 0, 0, 0]
+        POSITION: [7, 12, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [4, 12, 1.1, 22, 0, 0, 0],
+        POSITION: [-4, 12, 1.1, 22, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.trap, g.block, [1, 1, 1, 1, 0.8, 0.6, 0.8, 1, 1, 1, 0.7, 1, 0.8]]),
             TYPE: defExport.block
@@ -8132,19 +8132,19 @@ defExport.eliteDestroyer = {
         ACCELARATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [5, 16, 1, 6, 0, 180, 0],
+        POSITION: [14.5, 16, 1, 6, 0, 180, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.pound, g.destroy, g.more_power]),
             TYPE: defExport.bullet
         }
     }, {
-        POSITION: [5, 16, 1, 6, 0, 60, 0],
+        POSITION: [14.5, 16, 1, 6, 0, 60, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.pound, g.destroy, g.more_power]),
             TYPE: defExport.bullet
         }
     }, {
-        POSITION: [5, 16, 1, 6, 0, -60, 0],
+        POSITION: [14.5, 16, 1, 6, 0, -60, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.pound, g.destroy, g.more_power]),
             TYPE: defExport.bullet
@@ -33244,9 +33244,9 @@ defExport.builderMinion = {
     GUNS: [{
         POSITION: [18, 12, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [2, 12, 1.1, 18, 0, 0, 0],
+        POSITION: [3.8, 12, 1.1, 18, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.minion]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.minion, g.more_power, g.more_power]),
             TYPE: defExport.block
         }
     }]
@@ -35698,7 +35698,7 @@ defExport.megaConstruct = {
     }, {
         POSITION: [4.4, 26, 1.2, 18, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.decalibrate, g.more_range, [1, 1, 1, 1.3, 1, 1, 1, 1, 1, 1, 1, 1, 1]]),
+            SHOOT_SETTINGS: combineStats([g.trap, g.block, g.construct, g.decalibrate, g.more_range, [0.6, 1, 1, 1.1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]),
             TYPE: defExport.block
         }
     }]
@@ -57301,9 +57301,9 @@ defExport.armyTrapTurret = {
     COLOR: 16,
     HAS_NO_RECOIL: true,
     GUNS: [{
-        POSITION: [16, 14, 1, 0, 0, 0, 0]
+        POSITION: [28, 14, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [4, 14, 1.8, 16, 0, 0, 0],
+        POSITION: [16, 14, 1.8, 16, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.trap, g.low_power, g.fast, g.half_reload]),
             TYPE: defExport.trap,
@@ -57312,9 +57312,9 @@ defExport.armyTrapTurret = {
             COLOR_OVERRIDE: 13
         }
     }, {
-        POSITION: [16, 14, 1, 0, 0, 120, 0]
+        POSITION: [28, 14, 1, 0, 0, 120, 0]
     }, {
-        POSITION: [4, 14, 1.8, 16, 0, 120, 0],
+        POSITION: [16, 14, 1.8, 16, 0, 120, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.trap, g.low_power, g.fast, g.half_reload]),
             TYPE: defExport.trap,
@@ -57323,9 +57323,9 @@ defExport.armyTrapTurret = {
             COLOR_OVERRIDE: 13
         }
     }, {
-        POSITION: [16, 14, 1, 0, 0, 240, 0]
+        POSITION: [28, 14, 1, 0, 0, 240, 0]
     }, {
-        POSITION: [4, 14, 1.8, 16, 0, 240, 0],
+        POSITION: [16, 14, 1.8, 16, 0, 240, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.trap, g.low_power, g.fast, g.half_reload]),
             TYPE: defExport.trap,
@@ -79256,9 +79256,9 @@ defExport.fallenCavalcade = makeHybrid({
     GUNS: [{
         POSITION: [18, 8, 1, 0, 0, 0, 0]
     }, {
-        POSITION: [10, 14, 1.01, 16, 0, 0, 0],
+        POSITION: [20, 14, 1.01, 16, 0, 0, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.steam]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.steam, g.more_power]),
             TYPE: defExport.bullet
         }
     }]
@@ -96944,28 +96944,28 @@ defExport.rummy = {
             TYPE: defExport.bullet,
             ON_FIRE: (gun, gunInfo) => {
                 fireRandom(gun, gunInfo, [
-                    Class.bullet,
-                    Class.trap,
-                    Class.block,
-                    Class.boomerang,
-                    Class.autoSwarm,
-                    Class.foamBullet,
-                    Class.explosion,
-                    Class.basicAutoBullet2,
-                    Class.heatMissile2,
-                    Class.littleMissile,
-                    Class.bullet,
-                    Class.trap,
-                    Class.block,
-                    Class.boomerang,
-                    Class.autoSwarm,
-                    Class.foamBullet,
-                    Class.explosion,
-                    Class.basicAutoBullet2,
-                    Class.heatMissile2,
-                    Class.littleMissile,
-                    Class.rummyVolley,
-                    Class.explosiveNokia
+                    defExport.bullet,
+                    defExport.trap,
+                    defExport.block,
+                    defExport.boomerang,
+                    defExport.autoSwarm,
+                    defExport.foamBullet,
+                    defExport.explosion,
+                    defExport.basicAutoBullet2,
+                    defExport.heatMissile2,
+                    defExport.littleMissile,
+                    defExport.bullet,
+                    defExport.trap,
+                    defExport.block,
+                    defExport.boomerang,
+                    defExport.autoSwarm,
+                    defExport.foamBullet,
+                    defExport.explosion,
+                    defExport.basicAutoBullet2,
+                    defExport.heatMissile2,
+                    defExport.littleMissile,
+                    defExport.rummyVolley,
+                    defExport.explosiveNokia
                 ])
             }
         }
@@ -97797,11 +97797,11 @@ defExport.pneuma = {
             TYPE: defExport.bullet,
             ON_FIRE: (gun, gunInfo) => {
                 fireRandom(gun, gunInfo, [
-                    Class.nuke,
-                    Class.deroNukeShoe,
-                    Class.pneumaTrap,
-                    Class.pneumaSwarm,
-                    Class.pneumaArc
+                    defExport.nuke,
+                    defExport.deroNukeShoe,
+                    defExport.pneumaTrap,
+                    defExport.pneumaSwarm,
+                    defExport.pneumaArc
                 ]);
             }
         }
@@ -110998,8 +110998,8 @@ defExport.necroRectangle = {
             TYPE: defExport.bullet,
             ON_FIRE: (gun, gunInfo) => {
                 fireRandom(gun, gunInfo, [
-                    Class.foamBullet,
-                    Class.sunchip
+                    defExport.foamBullet,
+                    defExport.sunchip
                 ]);
             },
             AUTOFIRE: true,
@@ -116872,7 +116872,7 @@ defExport.donutAnni = {
         ACCELERATION: base.ACCEL * .75
     },
     GUNS: [{
-        POSITION: [20.5, 19.5, 1, 0, 0, 0, 0],
+        POSITION: [28.5, 19.5, 1, 0, 0, 0, 0],
         PROPERTIES: {
             SHOOT_SETTINGS: combineStats([g.basic, g.pound, g.destroy, g.anni, g.lots_more_recoil]),
             TYPE: defExport.donut
@@ -126623,13 +126623,13 @@ defExport.workshop = {
             TYPE: defExport.bullet,
             ON_FIRE: (gun, gunInfo) => {
                 fireRandom(gun, gunInfo, [
-                    Class.pillbox,
-                    Class.fogblock,
-                    Class.splitBlock,
-                    Class.boomerang,
-                    Class.blockMine,
-                    Class.oldBlock,
-                    Class.minishipBlock
+                    defExport.pillbox,
+                    defExport.fogblock,
+                    defExport.splitBlock,
+                    defExport.boomerang,
+                    defExport.blockMine,
+                    defExport.oldBlock,
+                    defExport.minishipBlock
                 ]);
             },
             DESTROY_OLDEST_CHILD: true,
@@ -134745,7 +134745,7 @@ for (let i = 0; i < 3; i++) defExport.sanctuaryTurret.GUNS.push({
 }, {
     POSITION: [15, 12, -1.1, 0, 0, (360 / 3) * i, 0],
     PROPERTIES: {
-        SHOOT_SETTINGS: combineStats([g.basic, g.flank, [1, 1, 1, .875, 1, -1, 1, 1, 1, 0.2, 0, 1, 1]]),
+        SHOOT_SETTINGS: combineStats([g.basic, g.flank, [1, 1, 1, .875, 1, -1, 1, 1, 1, .2, 0, 1, 1]]),
         TYPE: defExport.healBullet,
         STAT_CALCULATOR: gunCalcNames.sustained
     }
@@ -136853,12 +136853,12 @@ defExport.flamethrowerBlizzard = makeAuto({
             SKIN: 1,
             ON_FIRE: (gun, gunInfo) => {
                 fireRandom(gun, gunInfo, [
-                    Class.bullet,
-                    Class.bullet,
-                    Class.bullet,
-                    Class.bullet,
-                    Class.bullet,
-                    Class.chillerBullet
+                    defExport.bullet,
+                    defExport.bullet,
+                    defExport.bullet,
+                    defExport.bullet,
+                    defExport.bullet,
+                    defExport.chillerBullet
                 ])
             }
         }
@@ -137394,7 +137394,7 @@ defExport.randomizer = {
             SHOOT_SETTINGS: combineStats([g.basic, g.mach, g.mach_smaller, g.half_reload, g.one_third_reload]),
             TYPE: defExport.bullet,
             ON_FIRE: function(gun, gunInfo) {
-                fireRandom(gun, gunInfo, [Class.foamBullet, Class.foamBulletSwarm, Class.foamBulletBee]);
+                fireRandom(gun, gunInfo, [defExport.foamBullet, defExport.foamBulletSwarm, defExport.foamBulletBee]);
             }
         }
     }]
@@ -140955,8 +140955,8 @@ defExport.ultraSpawnerMinion = {
                 shudder: 0.1,
                 size: 1.1,
                 health: 1,
-                damage: 1.1,
-                pen: 0.8,
+                damage: 1,
+                pen: 1.5,
                 speed: 2.8,
                 maxSpeed: 0.55,
                 range: 1.5,
@@ -141156,10 +141156,14 @@ defExport.bigMac = {
                 g.pound,
                 g.destroy,
                 g.anni,
-                g.steam,
                 g.more_recoil,
                 g.less_reload,
-                g.fast_launch,
+                g.very_fast_launch,
+                g.more_power,
+                g.slow,
+
+
+
 
             ]),
             TYPE: defExport.bullet

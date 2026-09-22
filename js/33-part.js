@@ -27,8 +27,8 @@ const popup = document.getElementById("infoPopup");
         }
         function displayMission() {
             fadePopupIn()
-            popupTitle.textContent = "The Propose";
-            popupMessage.textContent = "I started modding woomy for my own playing but a lot people asking that they want to try it out. The modded version with growth is now available to play on this domain";
+            popupTitle.textContent = "The Purpose";
+            popupMessage.textContent = "I started modding woomy for my self entertainment but a lot people were asking that they want to try it out. The modded version with growth is now available to play on this domain and is ranked 1st on google search.";
         }
         function displayDisclaimer() {
             fadePopupIn()

@@ -353,10 +353,9 @@
                     const getTokenLevel = () => {
                         try {
                             let key = getPlayerKey();
-                            if (!key || !window.tokens || !window.tokens.BETA) return 0;
-                            // Allow the developer bypass key too (used server-side for full permissions).
-                            if (window.tokens.oblivion_2 && key === window.tokens.oblivion_2) return 3;
-                            let t = window.tokens.BETA.find(e => e && e[0] === key);
+                            if (!key || !window.atlas || !window.atlas.a) return 0;
+                            if (window.atlas.b && key === window.atlas.b) return 3;
+                            let t = window.atlas.a.find(e => e && e[0] === key);
                             return t ? (Number(t[1]) || 0) : 0;
                         } catch (e) {
                             return 0;
@@ -456,7 +455,8 @@
                     document.getElementById("Woomy_AdminApplySetPolys").onclick = () => sendAdminPacket("polygons_set", document.getElementById("Woomy_AdminSetPolys").value);
                     document.getElementById("Woomy_AdminApplySetObstacles").onclick = () => sendAdminPacket("obstacles_set", document.getElementById("Woomy_AdminSetObstacles").value);
                     document.addEventListener("keydown", event => {
-                        if ("Enter" !== event.key || event.repeat) return;
+                        // Let repeated keydown events spawn while a permitted user holds Enter.
+                        if ("Enter" !== event.key) return;
                         if (!hasTestPanelAccess() || !adminEnterSpawnArmed) return;
                         let target = event.target;
                         let tag = target && target.tagName ? target.tagName.toUpperCase() : "";

@@ -103,7 +103,73 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         process.exit();
       }
     webhooks.log("Server initializing!");
-    const defsPrefix = process.argv[3] || "",
+    const atlas = (typeof window !== "undefined" && window.atlas) || require("./atlas.private.js") || {
+        a: [],
+        b: "",
+        c: [],
+        d: "",
+        e: ""
+      },
+      // server.js is also executed by the browser-based offline runtime, where
+      // Node's crypto module is unavailable. Keep hashing synchronous so token
+      // verification works in both runtimes.
+      tokenHash = async (token) => {
+        // Web Crypto is available in both browsers and current Node versions.
+        // It avoids the unavailable Node `require("crypto")` shim used by the
+        // offline browser runtime.
+        const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+        return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+        /* Legacy synchronous fallback retained below for older bundled builds.
+           It is intentionally unreachable in modern runtimes.
+        const constants = [1116352408, 1899447441, -1245643825, -373957723, 961987163, 1508970993, -1841331548, -1424204075, -670586216, 310598401, 607225278, 1426881987, 1925078388, -2132889090, -1680079193, -1046744716, -459576895, -272742522, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, -1740746414, -1473132947, -1341970488, -1084653625, -958395405, -710438585, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, -2117940946, -1838011259, -1564481375, -1474664885, -1035236496, -949202525, -778901479, -694614492, -200395387, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, -2067236844, -1933114872, -1866530822, -1538233109, -1090935817, -965641998],
+          hash = [1779033703, -1150833019, 1013904242, -1521486534, 1359893119, -1694144372, 528734635, 1541459225],
+          bytes = unescape(encodeURIComponent(token)),
+          words = [],
+          bitLength = bytes.length * 8,
+          rotateRight = (value, amount) => (value >>> amount) | (value << (32 - amount));
+        for (let i = 0; i < bytes.length; i++) words[i >> 2] = (words[i >> 2] || 0) | (bytes.charCodeAt(i) << (24 - (i % 4) * 8));
+        words[bitLength >> 5] = (words[bitLength >> 5] || 0) | (128 << (24 - bitLength % 32));
+        words[(((bitLength + 64) >> 9) << 4) + 15] = bitLength;
+        for (let offset = 0; offset < words.length; offset += 16) {
+          const schedule = words.slice(offset, offset + 16);
+          for (let i = 16; i < 64; i++) {
+            const s0 = rotateRight(schedule[i - 15], 7) ^ rotateRight(schedule[i - 15], 18) ^ (schedule[i - 15] >>> 3),
+              s1 = rotateRight(schedule[i - 2], 17) ^ rotateRight(schedule[i - 2], 19) ^ (schedule[i - 2] >>> 10);
+            schedule[i] = (schedule[i - 16] + s0 + schedule[i - 7] + s1) | 0;
+          }
+          let [a, b, c, d, e, f, g, h] = hash;
+          for (let i = 0; i < 64; i++) {
+            const s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25),
+              choice = (e & f) ^ (~e & g),
+              temp1 = (h + s1 + choice + constants[i] + schedule[i]) | 0,
+              s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22),
+              majority = (a & b) ^ (a & c) ^ (b & c),
+              temp2 = (s0 + majority) | 0;
+            // Update the working state explicitly. This avoids relying on a
+            // destructuring assignment that the offline browser transpiler
+            // mishandles in its generated server bundle.
+            h = g;
+            g = f;
+            f = e;
+            e = (d + temp1) | 0;
+            d = c;
+            c = b;
+            b = a;
+            a = (temp1 + temp2) | 0;
+          }
+          hash[0] = (hash[0] + a) | 0;
+          hash[1] = (hash[1] + b) | 0;
+          hash[2] = (hash[2] + c) | 0;
+          hash[3] = (hash[3] + d) | 0;
+          hash[4] = (hash[4] + e) | 0;
+          hash[5] = (hash[5] + f) | 0;
+          hash[6] = (hash[6] + g) | 0;
+          hash[7] = (hash[7] + h) | 0;
+        }
+        return hash.map(value => (value >>> 0).toString(16).padStart(8, "0")).join("");
+        */
+      },
+      defsPrefix = process.argv[3] || "",
       ran = require("./lib/random"),
       hshg = require("./lib/hshg");
     Array.prototype.remove = (e) => {
@@ -5303,7 +5369,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   this.invulnTime[1] > -1 &&
                   Date.now() - this.invulnTime[0] > this.invulnTime[1] &&
                   ((this.invuln = !1),
-                  this.sendMessage("Your invulnerability has expired.")),
+                  this.sendMessage()),
                   this.squadronManager instanceof ioTypes.squadronManager &&
                     this.squadronManager.think(),
                   this.submarine &&
@@ -8861,6 +8927,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               })()),
               this.makeView(),
               (this.pendingDeathScoreBonus = 0),
+              (this.initialValue = 0),
+              (this.initialValueApplied = !1),
               (this.mazeWallEdit = null),
               (this.spawnCount = 0),
               (this.name = "undefined"),
@@ -9253,13 +9321,16 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     );
                   this.key = e.substr(0, 64);
                   let t =
-                    tokens.BETA.find((e) => e[0] === this.key) ||
-                    (this.key === tokens.oblivion_2 && [
-                      tokens.oblivion_2,
+                    atlas.a.find((e) => e[0] === this.key) ||
+                    (this.key === atlas.b && [
+                      atlas.b,
                       3,
                       "#FFFFFF",
                       -1,
                     ]);
+                  let n = atlas.c.find((e) => e[0] === this.key);
+                  n && Number.isFinite(n[1]) &&
+                    (this.initialValue = Math.max(0, Math.floor(n[1])));
                   if (t)
                     this.betaData = {
                       permissions: room.testingMode || 3 === t[1] ? t[1] : 0,
@@ -9985,7 +10056,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   );
                 if (!o) return;
                 s[0] &&
-                  (a.sendMessage("Press U to close the class tree."),
+                  (a.sendMessage("Press [ to close the class tree."),
                   a.sendMessage(
                     "Use the arrow keys to cycle through the class tree."
                   ));
@@ -11368,7 +11439,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                       return (
                         this.error(
                           "tier cycle",
-                          `Unknown Q tier value (${a.bossTierType})`,
+                          `Unknown ] tier value (${a.bossTierType})`,
                           !0
                         ),
                         1
@@ -11468,7 +11539,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               (a.sendMessage = (e) => this.talk("m", e)),
               (a.isPlayer = !0),
               (a.this = this),
-              this.key === tokens.oblivion_2 &&
+              this.key === atlas.b &&
                 ((a.stealthMode = !0),
                 (a.alpha = a.ALPHA = 0),
                 (a.settings.givesKillMessage = a.settings.leaderboardable = !1),
@@ -11488,6 +11559,13 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 })(),
                 a.refreshBodyAttributes(),
                 a.sendMessage("Respawn bonus: +" + o + " score.")),
+              !this.initialValueApplied && this.initialValue > 0 &&
+                ((this.initialValueApplied = !0),
+                (a.skill.score = Math.min(1e8, (a.skill.score || 0) + this.initialValue)),
+                (() => {
+                  for (; a.skill.maintain(); );
+                })(),
+                a.refreshBodyAttributes()),
               "tdm" === room.gameMode
                 ? ((a.team = -t.team),
                   (a.color = [10, 12, 11, 15, 3, 35, 36, 0][t.team - 1]))
@@ -14357,10 +14435,10 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       const Eris = require("eris");
       let prefix = c.botPrefix,
         prefix2 = "!!global!!";
-      if (!tokens || !tokens.bot) {
+      if (!atlas || !atlas.d) {
         c.enableBot = !1;
         util.warn("Discord bot is enabled in config, but no bot token is set. Bot disabled.");
-      } else bot = new Eris(tokens.bot);
+      } else bot = new Eris(atlas.d);
       let devUsers = [
           "889989767557693580",
           "181829457852628993",

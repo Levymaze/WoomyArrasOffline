@@ -69,6 +69,7 @@ A large collection of testing utilities has been added for developers, hosts, an
 | `U` | Decrease entity score |
 | `H` | Fully heal an entity |
 | `Q` | Instant teleport with temporary immunity |
+| `]` | Cycle EK, Switcheroo, and other special tank tiers |
 | `+` | Increase field of view |
 | `-` | Decrease field of view |
 | `V` | Create walls |

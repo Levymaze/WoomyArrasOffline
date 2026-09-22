@@ -2591,7 +2591,7 @@
                                 window.__growthModePolyfill = selectedMode === "growth";
                                 if (!window.__woomyServerLoaded) {
                                     let scrpt = document.createElement("script")
-                                    scrpt.src = "./server.js?v=20260224a"
+                                    scrpt.src = "./server.js?v=20260828a"
                                     document.head.appendChild(scrpt)
                                     window.__woomyServerLoaded = true
                                 }
@@ -2607,6 +2607,9 @@
                                 }, 100);
                             };
                             window.addEventListener("resize", resizeEvent);
+                            // Keep hitboxes and canvas dimensions aligned when mobile browser chrome changes.
+                            if (window.visualViewport) window.visualViewport.addEventListener("resize", resizeEvent);
+                            window.addEventListener("orientationchange", resizeEvent);
                             resizeEvent();
                             console.log("%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥\n%c   WARNING: Do not paste code or scripts here!\n%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥\n\n%c   Scripts that give you an unfair advantage can\n   result in a ban. Also, some scripts may\n   contain malicious code to steal your token!\n\n%câ—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥â—£â—¥", "color: crimson;", "color: crimson; font-weight: 900;  font-size: 40px", "color: crimson;", "color: DarkOrange; font-size: 20px; font-weight: 900", "color: crimson;");
                         };
@@ -7099,7 +7102,8 @@
                             // Rebound so U can be used for dev-token score decrement.
                             KEY_CLASS_TREE: 219,
                             KEY_REVERSE_MOUSE: 79,
-                            KEY_TIER_SWITCH_2: 81,
+                            KEY_TELEPORT_MOUSE: 81,
+                            KEY_TIER_SWITCH_2: 221,
                             KEY_OVERRIDE_MULTIBOX: 86,
                             KEY_SUBMERGE: 190,
                             KEY_HYDRO: 188,
@@ -7516,10 +7520,12 @@
                                     this.movementLeft = false;
                                     this.movementRight = false;
                                     this.lastTap = 0;
-                                    this.cv.addEventListener('touchstart', this.touchStart, false);
-                                    this.cv.addEventListener('touchmove', this.touchMove, false);
-                                    this.cv.addEventListener('touchend', this.touchEnd, false);
-                                    this.cv.addEventListener('touchcancel', this.touchEnd, false);
+                                    const touchOptions = { passive: false };
+                                    this.cv.addEventListener('touchstart', this.touchStart, touchOptions);
+                                    this.cv.addEventListener('touchmove', this.touchMove, touchOptions);
+                                    this.cv.addEventListener('touchend', this.touchEnd, touchOptions);
+                                    this.cv.addEventListener('touchcancel', this.touchEnd, touchOptions);
+                                    this.cv.addEventListener('contextmenu', event => event.preventDefault());
                                 } else {
                                     this.cv.addEventListener('mousedown', this.mouseDown, false);
                                     this.cv.addEventListener('mousemove', this.gameInput, false);
@@ -7541,9 +7547,56 @@
                                     setTimeout(() => window.canvas.socket.talk('L'), i * 125);
                                 }
                             }
+                            getTouchPosition(touch) {
+                                const rect = this.cv.getBoundingClientRect();
+                                // Use current render dimensions: mobile browser chrome and rotation can resize
+                                // the viewport before the canvas backing buffer is refreshed.
+                                const width = global.screenWidth || this.cv.width;
+                                const height = global.screenHeight || this.cv.height;
+                                return {
+                                    x: (touch.clientX - rect.left) * width / rect.width,
+                                    y: (touch.clientY - rect.top) * height / rect.height
+                                };
+                            }
+                            clearMovement() {
+                                if (this.movementTop) this.socket.cmd.set(0, this.movementTop = false);
+                                if (this.movementBottom) this.socket.cmd.set(1, this.movementBottom = false);
+                                if (this.movementLeft) this.socket.cmd.set(2, this.movementLeft = false);
+                                if (this.movementRight) this.socket.cmd.set(3, this.movementRight = false);
+                            }
+                            handleMobileButton(index) {
+                                switch (index) {
+                                    case 0:
+                                        global.mobileOptions = !global.mobileOptions;
+                                        break;
+                                    case 1:
+                                        for (let i = 0; i < 75; i++) setTimeout(() => this.socket.talk('L'), i * 25);
+                                        break;
+                                    case 2:
+                                        this.socket.talk('T', 0);
+                                        break;
+                                    case 3:
+                                        this.socket.talk('t', 1);
+                                        break;
+                                    case 4:
+                                        this.socket.talk('t', 0);
+                                        break;
+                                    case 5:
+                                        this.socket.talk('t', 2);
+                                        break;
+                                    case 6:
+                                        this.socket.talk('l');
+                                        break;
+                                    case 7:
+                                        this.socket.talk('T', 2);
+                                        break;
+                                    case 8:
+                                        this.socket.talk('X');
+                                }
+                            }
                             keyboardDown(event) {
                                 if (!global.gameStart) return;
-                                if (event.keyCode === global.KEY_TIER_SWITCH_2) {
+                                if (event.keyCode === global.KEY_TELEPORT_MOUSE) {
                                     this.parent.socket.talk("A", "teleport_mouse", 0);
                                     event.preventDefault();
                                     return;
@@ -7910,12 +7963,12 @@
                                     return;
                                 }
                                 if (global.died) {
-                                    const rr = global.screenWidth / innerWidth;
                                     const touch = e.changedTouches && e.changedTouches[0];
                                     if (touch && global.deathBackButton) {
                                         const b = global.deathBackButton;
-                                        const tx = touch.clientX * global.ratio * rr;
-                                        const ty = touch.clientY * global.ratio * rr;
+                                        const point = this.parent.getTouchPosition(touch);
+                                        const tx = point.x;
+                                        const ty = point.y;
                                         if (
                                             tx >= b.x &&
                                             tx <= b.x + b.w &&
@@ -7927,35 +7980,43 @@
                                         }
                                     }
                                     global.died = false;
-                                    this.parent.socket.talk('s', global.playerName, 0);
+                                    let socketOut = global.playerName.split('');
+                                    for (let i = 0; i < socketOut.length; i++) socketOut[i] = socketOut[i].charCodeAt();
+                                    this.parent.socket.talk('s', socketOut.toString(), 0, window.__woomyGetSpawnTeamChoice ? window.__woomyGetSpawnTeamChoice() : 0);
                                     this.parent.autoUpgrade();
                                     return;
                                 }
-                                let rr = global.screenWidth / innerWidth;
+                                if (!global.gameStart) return;
                                 for (let touch of e.changedTouches) {
-                                    let mpos = {
-                                        x: touch.clientX * global.ratio * rr,
-                                        y: touch.clientY * global.ratio * rr
-                                    };
+                                    let mpos = this.parent.getTouchPosition(touch);
                                     let id = touch.identifier;
-                                    let statIndex = global.clickables.stat.check(mpos);
+                                    // Upgrade/stat hitboxes are drawn in the mobile GUI's 1.4x coordinate
+                                    // space. Joysticks/mobile buttons use the unscaled canvas coordinates.
+                                    let uiMpos = { x: mpos.x * 1.4, y: mpos.y * 1.4 };
                                     let mobileClickIndex = global.clickables.mobileClicks.check(mpos);
-                                    //if (mobileClickIndex !== -1 && (global.mobileOptions === true || mobileClickIndex === 0)) global.mobileClickables[mobileClickIndex]();
+                                    if (mobileClickIndex !== -1) {
+                                        this.parent.handleMobileButton(mobileClickIndex);
+                                        continue;
+                                    }
+                                    let statIndex = global.clickables.stat.check(uiMpos);
                                     if (statIndex !== -1) this.parent.socket.talk('x', statIndex);
-                                    else if (global.clickables.skipUpgrades.check(mpos) !== -1) global.clearUpgrades();
+                                    else if (global.clickables.skipUpgrades.check(uiMpos) !== -1) global.clearUpgrades();
                                     else {
-                                        let index = global.clickables.carrier.check(mpos);
+                                        let index = global.clickables.carrier.check(uiMpos);
                                         if (index !== -1) {
                                             global.carrierUI.buttons[index].click();
-                                        } else if (index = global.clickables.upgrade.check(mpos), index !== -1) {
+                                        } else if (index = global.clickables.upgrade.check(uiMpos), index !== -1) {
                                             this.parent.socket.talk("U", index);
                                         } else {
-                                            mpos.x /= rr;
-                                            mpos.y /= rr;
-                                            let onLeft = mpos.x < this.parent.cv.width / 2;
-                                            if (this.parent.movementTouch === null && onLeft) {
+                                            const radius = Math.min(this.parent.cv.width * 0.6, this.parent.cv.height * 0.12);
+                                            const movementX = this.parent.cv.width / 6;
+                                            const controlX = this.parent.cv.width * 5 / 6;
+                                            const centerY = this.parent.cv.height * 2 / 3;
+                                            const inMovementZone = Math.hypot(mpos.x - movementX, mpos.y - centerY) <= radius * 1.35;
+                                            const inControlZone = Math.hypot(mpos.x - controlX, mpos.y - centerY) <= radius * 1.35;
+                                            if (this.parent.movementTouch === null && inMovementZone) {
                                                 this.parent.movementTouch = id;
-                                            } else if (this.parent.controlTouch === null && !onLeft) {
+                                            } else if (this.parent.controlTouch === null && inControlZone) {
                                                 this.parent.controlTouch = id;
                                                 this.parent.socket.cmd.set(4, true);
                                                 if (Date.now() - this.parent.lastTap < 500) {
@@ -7972,15 +8033,16 @@
                                 const _this = useParent ? this.parent : this;
                                 e.preventDefault();
                                 for (let touch of e.changedTouches) {
-                                    let mpos = {
-                                        x: touch.clientX * global.ratio,
-                                        y: touch.clientY * global.ratio
-                                    };
+                                    let mpos = _this.getTouchPosition(touch);
                                     let id = touch.identifier;
                                     if (_this.movementTouch === id) {
                                         let x = mpos.x - _this.cv.width * 1 / 6;
                                         let y = mpos.y - _this.cv.height * 2 / 3;
                                         let norm = Math.sqrt(x * x + y * y);
+                                        if (norm < 1) {
+                                            _this.clearMovement();
+                                            continue;
+                                        }
                                         x /= norm;
                                         y /= norm;
                                         let amount = 0.3826834323650898; // Math.sin(Math.PI / 8)
@@ -7998,17 +8060,10 @@
                             touchEnd(e) {
                                 e.preventDefault();
                                 for (let touch of e.changedTouches) {
-                                    let mpos = {
-                                        x: touch.clientX * window.devicePixelRatio,
-                                        y: touch.clientY * window.devicePixelRatio
-                                    };
                                     let id = touch.identifier;
                                     if (this.parent.movementTouch === id) {
                                         this.parent.movementTouch = null;
-                                        if (this.parent.movementTop) this.parent.socket.cmd.set(0, this.parent.movementTop = false);
-                                        if (this.parent.movementBottom) this.parent.socket.cmd.set(1, this.parent.movementBottom = false);
-                                        if (this.parent.movementLeft) this.parent.socket.cmd.set(2, this.parent.movementLeft = false);
-                                        if (this.parent.movementRight) this.parent.socket.cmd.set(3, this.parent.movementRight = false);
+                                        this.parent.clearMovement();
                                     } else if (this.parent.controlTouch === id) {
                                         this.parent.controlTouch = null;
                                         this.parent.socket.cmd.set(4, false);
