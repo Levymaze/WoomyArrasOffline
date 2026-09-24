@@ -7861,6 +7861,18 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (this.damageReceived = 0),
           this.isDead())
         ) {
+          if (globalThis.__traceCollisionDeaths && "tank" === this.type) {
+            console.warn("[death trace]", {
+              id: this.id,
+              name: this.name,
+              label: this.label,
+              time: Date.now(),
+              isGhost: this.isGhost,
+              isInGrid: this.isInGrid,
+              collisions: this.collisionArray.length,
+              hitters: this.collisionArray.map((entity) => entity.id),
+            });
+          }
           if (isProjectileDeathFadeEntity(this)) {
             this.forceProjectileDeathFade = !0;
             this.forceProjectileDeathAnchor =
@@ -12817,6 +12829,35 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               }
             };
           })(),
+          deathWithTrace = (entity) => {
+            try {
+              return entity.death();
+            } catch (error) {
+              if (globalThis.__traceCollisionDeaths)
+                console.error("[death trace: death failed]", {
+                  id: entity.id,
+                  name: entity.name,
+                  label: entity.label,
+                  isGhost: entity.isGhost,
+                }, error);
+              throw error;
+            }
+          },
+          destroyWithTrace = (entity) => {
+            try {
+              entity.destroy();
+            } catch (error) {
+              if (globalThis.__traceCollisionDeaths)
+                console.error("[death trace: destroy failed]", {
+                  id: entity.id,
+                  name: entity.name,
+                  label: entity.label,
+                  isGhost: entity.isGhost,
+                  isInGrid: entity.isInGrid,
+                }, error);
+              throw error;
+            }
+          },
           t = (e) => {
             let t = room.wallCollisions.filter((t) => t.id === e.id);
             if (t.length > 1) {
@@ -12844,8 +12885,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   ((e.invuln = e.passive = e.godmode = !1),
                   (e.killedByWalls = !0)));
             }
-            e.death()
-              ? e.destroy()
+            deathWithTrace(e)
+              ? destroyWithTrace(e)
               : (null == e.bond &&
                   (logs.physics.set(),
                   newLogs.physics.start(),
