@@ -159,12 +159,6 @@
       "bytes": 3157
     },
     {
-      "index": 27,
-      "kind": "inline",
-      "output": "js/27-tankgen-results.js",
-      "bytes": 17113902
-    },
-    {
       "index": 28,
       "kind": "inline",
       "output": "js/28-part.js",
