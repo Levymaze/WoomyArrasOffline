@@ -2070,7 +2070,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       },
       getEntity = (e) => entities.find((t) => t.id === e),
       trimName = (e) =>
-        (e || "").replace("‮", "").trim() || "An unnamed player",
+        (e || "").replace(/\0/g, "").replace("‮", "").trim() || "An unnamed player",
       quickCombine = (e) => {
         if (null == e) return "Please input a valid array of gun settings.";
         if (13 === e.length)
@@ -7997,6 +7997,17 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 : this.isBot
                 ? (t += " was slaughtered by server code.")
                 : (t += " suffered an unknown fate.");
+            if (globalThis.__traceCollisionDeaths && t.includes("\0"))
+              console.warn("[death trace: invalid announcement]", {
+                victimId: this.id,
+                victimName: this.name,
+                killers: e.map((killer) => ({
+                  id: killer.id,
+                  name: killer.name,
+                  label: killer.label,
+                })),
+                announcement: t,
+              });
             sockets.broadcast(t);
           }
           return newLogs.death.stop(), !0;
@@ -9497,7 +9508,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     -1 !== views.indexOf(this.view) &&
                       (util.remove(views, views.indexOf(this.view)),
                       this.makeView()),
-                    (this.player = this.spawn(e, n)),
+                    (this.player = this.spawn(e.replace(/\0/g, ""), n)),
                     t &&
                       this.talk(
                         "R",
@@ -11836,7 +11847,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         })();
         return {
           broadcast: (e, t = "") => {
-            for (let s of clients) s.talk("m", e, t);
+            for (let s of clients) s.talk("m", e.replace(/\0/g, ""), t);
           },
           broadcastRoom: () => {
             for (let e of clients)
