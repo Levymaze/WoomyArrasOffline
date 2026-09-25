@@ -22,9 +22,11 @@
                     holder.style.height = 0;
                     holder.style.opacity = 0;
                     holder.innerHTML += `<center><h2>Settings</h2></center>`;
+                    let escapeHTML = str => String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
                     let createInput = setting => {
+                        let safeKey = escapeHTML(setting.key), safeName = escapeHTML(setting.name);
                         if (setting.dropDown.status) {
-                            let HTML = `<label for="Woomy_${setting.key}">${setting.name}:</label><select id="Woomy_${setting.key}" tabindex="-1" value="${setting.value}">`;
+                            let HTML = `<label for="Woomy_${safeKey}">${safeName}:</label><select id="Woomy_${safeKey}" tabindex="-1" value="${setting.value}">`;
                             for (let option of setting.dropDown.options) HTML += `<option value="${option}">${(option = option.split(""), option[0] = option[0].toUpperCase(), option = option.join(""), `${option} ${setting.dropDown.suffix}`)}</option>`;
                             HTML += "</select><br/>";
                             holder.innerHTML += HTML;
@@ -33,15 +35,15 @@
                         }
                         switch (setting.type) {
                             case "boolean": {
-                                let HTML = `<label for="Woomy_${setting.key}">${setting.name}: </label><label class="checkbox-container"><input id="Woomy_${setting.key}" tabindex="-1" type="checkbox"${setting.value ? " checked" : ""}><span class="checkbox-indicator"></span></label></br>`;
+                                let HTML = `<label for="Woomy_${safeKey}">${safeName}: </label><label class="checkbox-container"><input id="Woomy_${safeKey}" tabindex="-1" type="checkbox"${setting.value ? " checked" : ""}><span class="checkbox-indicator"></span></label></br>`;
                                 holder.innerHTML += HTML;
                             } break;
                             case "number": {
-                                let HTML = `<label for="Woomy_${setting.key}">${setting.name}: </label> <input id="Woomy_${setting.key}" tabindex="-1" class="optionInput" type="number" step="0.01" min="0" max="100" value="${setting.value}"></br>`;
+                                let HTML = `<label for="Woomy_${safeKey}">${safeName}: </label> <input id="Woomy_${safeKey}" tabindex="-1" class="optionInput" type="number" step="0.01" min="0" max="100" value="${setting.value}"></br>`;
                                 holder.innerHTML += HTML;
                             } break;
                             case "string": {
-                                let HTML = `<label for="Woomy_${setting.key}">${setting.name}: </label> <input id="Woomy_${setting.key}" tabindex="-1" class="optionInput" type="text" value="${setting.value}"></br>`;
+                                let HTML = `<label for="Woomy_${safeKey}">${safeName}: </label> <input id="Woomy_${safeKey}" tabindex="-1" class="optionInput" type="text" value="${setting.value}"></br>`;
                                 holder.innerHTML += HTML;
                             } break;
                         }
