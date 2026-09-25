@@ -2799,6 +2799,7 @@
                                             return get.set(data);
                                         },
                                         data: function () {
+                                            const previousEntitiesById = new Map();
                                             const process = function () {
                                                 const GunContainer = function () {
                                                     function physics(g) {
@@ -2981,11 +2982,12 @@
                                                         } else {
                                                             entity.interval = metrics.rendergap;
                                                             entity.id = get.next();
-                                                            let iii = entities.findIndex(x => x.id === entity.id);
-                                                            if (iii !== -1) {
-                                                                entity = entities.splice(iii, 1)[0];
+                                                            const previousEntity = previousEntitiesById.get(entity.id);
+                                                            if (previousEntity !== undefined) {
+                                                                entity = previousEntity;
+                                                                previousEntitiesById.delete(entity.id);
                                                             }
-                                                            isNew = iii === -1;
+                                                            isNew = previousEntity === undefined;
                                                             if (!isNew) {
                                                                 entity.render.draws = true;
                                                                 entity.render.lastx = entity.x;
@@ -3103,10 +3105,11 @@
                                                 };
                                             }();
                                             return function () {
+                                                previousEntitiesById.clear();
+                                                for (const entity of entities) previousEntitiesById.set(entity.id, entity);
                                                 let output = [];
                                                 for (let i = 0, len = get.next(); i < len; i++) output.push(process());
-                                                for (let i = 0; i < entities.length; i++) {
-                                                    let e = entities[i];
+                                                for (const e of previousEntitiesById.values()) {
                                                     e.render.status.set(e.health === 1 ? "dying" : "killed");
                                                     if (e.render.status.getFade() !== 0 && isInView(e.render.x - player.renderx, e.render.y - player.rendery, e.size, 1)) {
                                                         output.push(e);
