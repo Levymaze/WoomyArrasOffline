@@ -43,7 +43,6 @@ function chooseName(scriptBody, idx, usedNames) {
     ["config", "module.exports(\"config.json\""],
     ["mockup-polyfill", "window.__mockupPolyfill"],
     ["tokens", "window.tokens"],
-    ["tankgen-results", "module.exports(\"tankGenRESULTS\""],
   ];
 
   for (const [name, needle] of rules) {

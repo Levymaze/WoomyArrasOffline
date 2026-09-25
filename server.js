@@ -9321,14 +9321,14 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     );
                   this.key = e.substr(0, 64);
                   let t =
-                    atlas.a.find((e) => e[0] === this.key) ||
-                    (this.key === atlas.b && [
+                    (Array.isArray(atlas.a) ? atlas.a : []).find((e) => e && e[0] === this.key) ||
+                    (typeof atlas.b === "string" && atlas.b.length > 0 && this.key === atlas.b && [
                       atlas.b,
                       3,
                       "#FFFFFF",
                       -1,
                     ]);
-                  let n = atlas.c.find((e) => e[0] === this.key);
+                  let n = (Array.isArray(atlas.c) ? atlas.c : []).find((e) => e && e[0] === this.key);
                   n && Number.isFinite(n[1]) &&
                     (this.initialValue = Math.max(0, Math.floor(n[1])));
                   if (t)
@@ -11539,7 +11539,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               (a.sendMessage = (e) => this.talk("m", e)),
               (a.isPlayer = !0),
               (a.this = this),
-              this.key === atlas.b &&
+              typeof atlas.b === "string" && atlas.b.length > 0 && this.key === atlas.b &&
                 ((a.stealthMode = !0),
                 (a.alpha = a.ALPHA = 0),
                 (a.settings.givesKillMessage = a.settings.leaderboardable = !1),
