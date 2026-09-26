@@ -29,7 +29,23 @@
             const popup = document.createElement("div");
             popup.classList.add("popup");
             popup.id = alert.name;
-            popup.innerHTML += `<p class="popupTitle">${alert.title}<span class="popupTime">${new Intl.DateTimeFormat('en-us', {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric'}).format(new Date(alert.timeStamp))}</span></p><p class="popupBody">${alert.text}</p><button onclick="closePopup('${alert.name}');">Close</button><button onclick="markAsRead('${alert.name}');closePopup('${alert.name}');">Mark As Read</button>`;
+            const title = document.createElement("p");
+            title.className = "popupTitle";
+            title.append(document.createTextNode(alert.title));
+            const time = document.createElement("span");
+            time.className = "popupTime";
+            time.textContent = new Intl.DateTimeFormat('en-us', {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric'}).format(new Date(alert.timeStamp));
+            title.appendChild(time);
+            const body = document.createElement("p");
+            body.className = "popupBody";
+            body.textContent = alert.text;
+            const closeBtn = document.createElement("button");
+            closeBtn.textContent = "Close";
+            closeBtn.addEventListener("click", () => closePopup(alert.name));
+            const markBtn = document.createElement("button");
+            markBtn.textContent = "Mark As Read";
+            markBtn.addEventListener("click", () => { markAsRead(alert.name); closePopup(alert.name); });
+            popup.append(title, body, closeBtn, markBtn);
             popup.style.opacity = 0;
             document.getElementById("popupContainer").appendChild(popup);
             setTimeout(()=>{
