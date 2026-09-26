@@ -23,26 +23,80 @@
                     holder.style.opacity = 0;
                     holder.innerHTML += `<center><h2>Settings</h2></center>`;
                     let createInput = setting => {
+                        let id = `Woomy_${setting.key}`;
                         if (setting.dropDown.status) {
-                            let HTML = `<label for="Woomy_${setting.key}">${setting.name}:</label><select id="Woomy_${setting.key}" tabindex="-1" value="${setting.value}">`;
-                            for (let option of setting.dropDown.options) HTML += `<option value="${option}">${(option = option.split(""), option[0] = option[0].toUpperCase(), option = option.join(""), `${option} ${setting.dropDown.suffix}`)}</option>`;
-                            HTML += "</select><br/>";
-                            holder.innerHTML += HTML;
-                            document.getElementById(`Woomy_${setting.key}`).value = setting.value;
+                            let label = document.createElement("label");
+                            label.htmlFor = id;
+                            label.textContent = `${setting.name}:`;
+                            let select = document.createElement("select");
+                            select.id = id;
+                            select.tabIndex = -1;
+                            for (let option of setting.dropDown.options) {
+                                let opt = document.createElement("option");
+                                opt.value = option;
+                                let capitalized = option.split("");
+                                capitalized[0] = capitalized[0].toUpperCase();
+                                opt.textContent = `${capitalized.join("")} ${setting.dropDown.suffix}`;
+                                select.appendChild(opt);
+                            }
+                            select.value = setting.value;
+                            holder.appendChild(label);
+                            holder.appendChild(select);
+                            holder.appendChild(document.createElement("br"));
                             return;
                         }
                         switch (setting.type) {
                             case "boolean": {
-                                let HTML = `<label for="Woomy_${setting.key}">${setting.name}: </label><label class="checkbox-container"><input id="Woomy_${setting.key}" tabindex="-1" type="checkbox"${setting.value ? " checked" : ""}><span class="checkbox-indicator"></span></label></br>`;
-                                holder.innerHTML += HTML;
+                                let label = document.createElement("label");
+                                label.htmlFor = id;
+                                label.textContent = `${setting.name}: `;
+                                let checkboxLabel = document.createElement("label");
+                                checkboxLabel.className = "checkbox-container";
+                                let input = document.createElement("input");
+                                input.id = id;
+                                input.tabIndex = -1;
+                                input.type = "checkbox";
+                                input.checked = !!setting.value;
+                                let indicator = document.createElement("span");
+                                indicator.className = "checkbox-indicator";
+                                checkboxLabel.appendChild(input);
+                                checkboxLabel.appendChild(indicator);
+                                holder.appendChild(label);
+                                holder.appendChild(checkboxLabel);
+                                holder.appendChild(document.createElement("br"));
                             } break;
                             case "number": {
-                                let HTML = `<label for="Woomy_${setting.key}">${setting.name}: </label> <input id="Woomy_${setting.key}" tabindex="-1" class="optionInput" type="number" step="0.01" min="0" max="100" value="${setting.value}"></br>`;
-                                holder.innerHTML += HTML;
+                                let label = document.createElement("label");
+                                label.htmlFor = id;
+                                label.textContent = `${setting.name}: `;
+                                let input = document.createElement("input");
+                                input.id = id;
+                                input.tabIndex = -1;
+                                input.className = "optionInput";
+                                input.type = "number";
+                                input.step = "0.01";
+                                input.min = "0";
+                                input.max = "100";
+                                input.value = setting.value;
+                                holder.appendChild(label);
+                                holder.appendChild(document.createTextNode(" "));
+                                holder.appendChild(input);
+                                holder.appendChild(document.createElement("br"));
                             } break;
                             case "string": {
-                                let HTML = `<label for="Woomy_${setting.key}">${setting.name}: </label> <input id="Woomy_${setting.key}" tabindex="-1" class="optionInput" type="text" value="${setting.value}"></br>`;
-                                holder.innerHTML += HTML;
+                                let label = document.createElement("label");
+                                label.htmlFor = id;
+                                label.textContent = `${setting.name}: `;
+                                let input = document.createElement("input");
+                                input.id = id;
+                                input.tabIndex = -1;
+                                input.className = "optionInput";
+                                input.type = "text";
+                                input.value = setting.value;
+                                holder.appendChild(label);
+                                holder.appendChild(document.createTextNode(" "));
+                                holder.appendChild(input);
+                                holder.appendChild(document.createElement("br"));
                             } break;
                         }
                     };
@@ -50,7 +104,10 @@
                         let setting = window.Woomy[_];
                         createInput(setting);
                     }
-                    holder.innerHTML += `<button id="saveOptions">Save & Apply Options</button><button id="resetOptions">Reset Options</button><br><button id="exportOptions">Export Options</button><button id="importOptions">Import Options</button><br><input type="text" autofocus tabindex="0" spellcheck="false" placeholder="..." id="optionsResult"/>`;
+                    // insertAdjacentHTML (not `innerHTML +=`) so it doesn't reserialize/reparse the
+                    // DOM-API nodes createInput() just appended, which would drop their .value/.checked
+                    // property state (never reflected back to HTML attributes).
+                    holder.insertAdjacentHTML("beforeend", `<button id="saveOptions">Save & Apply Options</button><button id="resetOptions">Reset Options</button><br><button id="exportOptions">Export Options</button><button id="importOptions">Import Options</button><br><input type="text" autofocus tabindex="0" spellcheck="false" placeholder="..." id="optionsResult"/>`);
                     document.body.appendChild(holder);
                     document.getElementById("Woomy_theme").value = Woomy["Theme"].value;
                     document.getElementById("Woomy_shaders").value = Woomy["Shader Casting"].value;
