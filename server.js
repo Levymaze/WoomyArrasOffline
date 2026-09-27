@@ -2079,6 +2079,78 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         for (let s of e) for (let e = 0; e < t.length; ++e) t[e] *= s[e];
         return t;
       };
+    // Lightweight center-point index used only for AI target acquisition.
+    // Collision broadphase stays on HSHG; AI perception does not need AABB hierarchy.
+    class AITargetGrid {
+      constructor(e = 8) {
+        (this.cellShift = e),
+          (this.cellSize = 1 << e),
+          (this.grid = new Map());
+      }
+      clear() {
+        this.grid.clear();
+      }
+      key(e, t) {
+        return (e << 16) | (65535 & t);
+      }
+      insert(e) {
+        let t = Math.floor(e.x / this.cellSize),
+          s = Math.floor(e.y / this.cellSize),
+          i = this.key(t, s),
+          a = this.grid.get(i);
+        a ? a.push(e) : this.grid.set(i, [e]);
+      }
+      query(e, t, s, i, a) {
+        if (s < e || i < t) return;
+        let o = Math.floor(e / this.cellSize),
+          r = Math.floor(t / this.cellSize),
+          n = Math.floor(s / this.cellSize),
+          l = Math.floor(i / this.cellSize);
+        for (let e = r; e <= l; e++)
+          for (let t = o; t <= n; t++) {
+            let s = this.grid.get(this.key(t, e));
+            if (s) for (let e = 0, t = s.length; e < t; e++) a(s[e]);
+          }
+      }
+    }
+    const isAITargetGridCandidate = (e) =>
+        !!e &&
+        ("tank" === e.type ||
+          "miniboss" === e.type ||
+          "crasher" === e.type ||
+          "food" === e.type ||
+          "drone" === e.type ||
+          "minion" === e.type),
+      getAITargetSearchBounds = (e, t) => {
+        let s = !!e.aiSettings.BLIND,
+          i = !!e.aiSettings.SKYNET;
+        if (s && i) return null;
+        let a = -1 / 0,
+          o = -1 / 0,
+          r = 1 / 0,
+          n = 1 / 0;
+        if (!s)
+          (a = Math.max(a, e.x - t)),
+            (o = Math.max(o, e.y - t)),
+            (r = Math.min(r, e.x + t)),
+            (n = Math.min(n, e.y + t));
+        if (!i) {
+          let s = e.master.master,
+            i = t * Math.sqrt(4 / 3);
+          (a = Math.max(a, s.x - i)),
+            (o = Math.max(o, s.y - i)),
+            (r = Math.min(r, s.x + i)),
+            (n = Math.min(n, s.y + i));
+        }
+        return {
+          x1: a,
+          y1: o,
+          x2: r,
+          y2: n,
+        };
+      },
+      aiTargetGrid = new AITargetGrid(8);
+
     room.init();
     class IO {
       constructor(e) {
@@ -2946,11 +3018,22 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         constructor(e) {
           super(e),
             (this.targetLock = void 0),
-            (this.tick = ran.irandom(30)),
+            (this.tick = ran.irandom(3)),
+            (this.searchTick = ran.irandom(3)),
+            (this.recheckTick = 90 + ran.irandom(30)),
             (this.lead = 0),
-            (this.validTargets = this.buildList(e.fov)),
+            (this.validTargets = []),
             (this.oldHealth = e.health.display()),
-            (this.lastView = Date.now());
+            (this.lastView = Date.now()),
+            (this.output = {
+              target: {
+                x: 0,
+                y: 0,
+              },
+              fire: !0,
+              main: !0,
+            }),
+            (this.emptyOutput = {});
         }
         validate(e, t, s, i, a) {
           return (
@@ -2978,44 +3061,57 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               ((e.x - s.x) * (e.x - s.x) < a && (e.y - s.y) * (e.y - s.y) < a))
           );
         }
+        isInFiringArc(e) {
+          return (
+            null == this.body.firingArc ||
+            this.body.aiSettings.view360 ||
+            Math.abs(
+              util.angleDifference(
+                util.getDirection(this.body, e),
+                this.body.firingArc[0]
+              )
+            ) < this.body.firingArc[1]
+          );
+        }
         buildList(e) {
           newLogs.buildList.start();
           let t = 0,
             s = !1,
-            i = [];
-          for (let a = 0, o = targetableEntities.length; a < o; a++) {
-            let o = targetableEntities[a];
-            this.validate(
-              o,
-              {
-                x: this.body.x,
-                y: this.body.y,
-              },
-              {
-                x: this.body.master.master.x,
-                y: this.body.master.master.y,
-              },
-              e * e,
-              (e * e * 4) / 3
-            ) &&
-              (null == this.body.firingArc ||
-                this.body.aiSettings.view360 ||
-                Math.abs(
-                  util.angleDifference(
-                    util.getDirection(this.body, o),
-                    this.body.firingArc[0]
-                  )
-                ) < this.body.firingArc[1]) &&
-              ((t = Math.max(o.dangerValue, t)),
-              (this.body.aiSettings.farm || o.dangerValue === t) &&
-                (this.targetLock && o.id === this.targetLock.id && (s = !0),
-                i.push(o)));
-          }
+            i = this.validTargets;
+          i.length = 0;
+          const a = {
+              x: this.body.x,
+              y: this.body.y,
+            },
+            o = {
+              x: this.body.master.master.x,
+              y: this.body.master.master.y,
+            },
+            r = e * e,
+            n = (4 * r) / 3,
+            l = (e) => {
+              this.validate(e, a, o, r, n) &&
+                this.isInFiringArc(e) &&
+                ((t = Math.max(e.dangerValue, t)),
+                (this.body.aiSettings.farm || e.dangerValue === t) &&
+                  (this.targetLock && e.id === this.targetLock.id && (s = !0),
+                  i.push(e)));
+            },
+            h = getAITargetSearchBounds(this.body, e);
+          if (null == h)
+            for (let e = 0, t = targetableEntities.length; e < t; e++)
+              l(targetableEntities[e]);
+          else
+            aiTargetGrid.query(h.x1, h.y1, h.x2, h.y2, l);
           return s || (this.targetLock = void 0), newLogs.buildList.stop(), i;
         }
         think(e) {
           if (e.main || e.alt || this.body.master.autoOverride)
-            return (this.targetLock = void 0), {};
+            return (
+              (this.targetLock = void 0),
+              (this.searchTick = 0),
+              this.emptyOutput
+            );
           newLogs.targeting.start();
           let t = this.body.topSpeed,
             s = this.body.fov;
@@ -3032,81 +3128,93 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     ));
               break;
             }
-          if (
-            (Number.isFinite(t) || (t = this.body.topSpeed + 0.01),
-            (!Number.isFinite(s) || s < this.body.size) && (s = this.body.fov),
-            this.targetLock &&
-              (this.validate(
-                this.targetLock,
-                {
-                  x: this.body.x,
-                  y: this.body.y,
-                },
-                {
-                  x: this.body.master.master.x,
-                  y: this.body.master.master.y,
-                },
-                s * s,
-                (s * s * 4) / 3
-              ) ||
-                ((this.targetLock = void 0), (this.tick = 100))),
-            this.tick++ > 25 * room.speed &&
-              ((this.tick = 0),
-              (this.validTargets = this.buildList(
-                this.body.isBot || this.body.isMothership ? 0.65 * s : s
-              )),
-              this.targetLock &&
-                -1 === this.validTargets.indexOf(this.targetLock) &&
-                (this.targetLock = void 0),
-              null == this.targetLock &&
-                this.validTargets.length &&
+          Number.isFinite(t) || (t = this.body.topSpeed + 0.01),
+            (!Number.isFinite(s) || s < this.body.size) && (s = this.body.fov);
+
+          const i = {
+              x: this.body.x,
+              y: this.body.y,
+            },
+            a = {
+              x: this.body.master.master.x,
+              y: this.body.master.master.y,
+            },
+            o = s * s,
+            r = (4 * o) / 3;
+
+          this.targetLock &&
+            (this.validate(this.targetLock, i, a, o, r) ||
+              ((this.targetLock = void 0), (this.searchTick = 0)));
+
+          if (this.targetLock && --this.recheckTick <= 0) {
+            let e = this.body.isBot || this.body.isMothership ? 0.65 * s : s,
+              t = e * e;
+            (this.validate(this.targetLock, i, a, t, (4 * t) / 3) &&
+              this.isInFiringArc(this.targetLock)) ||
+              ((this.targetLock = void 0), (this.searchTick = 0)),
+              (this.recheckTick = 90 + ran.irandom(30));
+          }
+
+          if (this.body.isBot) {
+            let e = this.body.bond || this.body,
+              t = e.health.display();
+            if (e.collisionArray.length && t < this.oldHealth) {
+              let t = e.collisionArray[0],
+                s =
+                  t && t.master
+                    ? -1 === t.master.id
+                      ? t.source
+                      : t.master
+                    : null;
+              s &&
+                ((this.targetLock = s),
+                (this.searchTick = 0),
+                (this.recheckTick = 90 + ran.irandom(30)));
+            }
+            this.oldHealth = t;
+          }
+
+          if (null == this.targetLock) {
+            if (this.searchTick-- <= 0) {
+              let e = this.body.isBot || this.body.isMothership ? 0.65 * s : s,
+                t = this.buildList(e);
+              t.length &&
                 ((this.targetLock =
-                  1 === this.validTargets.length
-                    ? this.validTargets[0]
-                    : nearest(this.validTargets, {
+                  1 === t.length
+                    ? t[0]
+                    : nearest(t, {
                         x: this.body.x,
                         y: this.body.y,
                       })),
-                (this.tick = -90))),
-            this.body.isBot)
-          ) {
-            let e = this.body.bond || this.body;
-            e.collisionArray.length &&
-              e.health.display() < this.oldHealth &&
-              ((this.oldHealth = e.health.display()),
-              -1 === this.validTargets.indexOf(e.collisionArray[0]) &&
-                (this.targetLock =
-                  -1 === e.collisionArray[0].master.id
-                    ? e.collisionArray[0].source
-                    : e.collisionArray[0].master));
+                (this.recheckTick = 90 + ran.irandom(30))),
+                (this.searchTick = this.targetLock ? 0 : 1 + ran.irandom(3));
+            }
           }
+
           if (null != this.targetLock) {
             let e = this.targetLock.velocity,
-              s = {
-                x: this.targetLock.x - this.body.x,
-                y: this.targetLock.y - this.body.y,
-              };
+              i = this.targetLock.x - this.body.x,
+              a = this.targetLock.y - this.body.y;
             if (
-              this.tick % 4 == 0 &&
+              this.tick++ % 4 == 0 &&
               ((this.lead = 0), !this.body.aiSettings.CHASE)
             ) {
-              let i = timeOfImpact(s, e, t);
-              this.lead = i;
-            }
-            return (
-              Number.isFinite(this.lead) || (this.lead = 0),
-              newLogs.targeting.stop(),
-              {
-                target: {
-                  x: s.x + this.lead * e.x,
-                  y: s.y + this.lead * e.y,
+              let s = timeOfImpact(
+                {
+                  x: i,
+                  y: a,
                 },
-                fire: !0,
-                main: !0,
-              }
-            );
+                e,
+                t
+              );
+              this.lead = s;
+            }
+            Number.isFinite(this.lead) || (this.lead = 0),
+              (this.output.target.x = i + this.lead * e.x),
+              (this.output.target.y = a + this.lead * e.y);
+            return newLogs.targeting.stop(), this.output;
           }
-          return newLogs.targeting.stop(), {};
+          return newLogs.targeting.stop(), this.emptyOutput;
         }
       }),
       (ioTypes.roamWhenIdle = class extends IO {
@@ -12952,15 +13060,20 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           }
           newLogs.collision.stop(), logs.collide.mark(), logs.entities.set();
           for (let e = 0, s = entities.length; e < s; e++) t(entities[e]);
-          (targetableEntities = []), purgeEntities();
-          for (let e = 0, t = entities.length; e < t; e++)
+          (targetableEntities.length = 0), aiTargetGrid.clear(), purgeEntities();
+          for (let e = 0, t = entities.length; e < t; e++) {
             (i = entities[e]),
               newLogs.activation.start(),
               (i.collisionArray = []),
-              i.activation.update(),
-              i.updateAABB(i.activation.check()),
-              i.activation.check() && (i.passive || targetableEntities.push(i)),
+              i.activation.update();
+            let e = i.activation.check();
+            i.updateAABB(e),
+              e &&
+                !i.passive &&
+                isAITargetGridCandidate(i) &&
+                (targetableEntities.push(i), aiTargetGrid.insert(i)),
               newLogs.activation.stop();
+          }
           var i;
           logs.entities.mark(),
             logs.master.mark(),
