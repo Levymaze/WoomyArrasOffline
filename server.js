@@ -1233,7 +1233,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             : "#FFFFFF") /* BOT TAG ORIGINAL COLOR: #c1caff */,
           (a.autoOverride = !0),
           (a.invuln = !0),
-          (a.skill.score = 59212),
+          // Give every bot a meaningful but varied head start, regardless of mode.
+          (a.skill.score = 56000 + Math.floor(Math.random() * 2944001)),
           setTimeout(() => {
             (a.invuln = !1),
               (a.autoOverride = !1),
@@ -4814,7 +4815,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         maxSkillPoints: 90,
         fovPerGrowth: 0.08,
         maxFovMultiplier: 1.15,
-        healthPerGrowth: 0.28,
+        // Match the full Growth health curve players receive. This applies to
+        // bots, bosses, and score-accepting polygons as well as tanks.
+        healthPerGrowth: 1,
         barrelPerGrowth: 1,
         barrelKnockbackDamage: 0.35,
         barrelKnockbackForce: 0.02,
@@ -8894,6 +8897,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 nameColor: "#FFFFFF",
                 discordID: -1,
               }),
+              (this.deathTokenType = null),
               (this.player = {
                 camera: {},
                 id: this.id,
@@ -9353,14 +9357,18 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     ]);
                   let n = (Array.isArray(atlas.c) ? atlas.c : []).find((e) => e && e[0] === this.key);
                   n && Number.isFinite(n[1]) &&
-                    (this.initialValue = Math.max(0, Math.floor(n[1])));
+                    ((this.initialValue = Math.max(0, Math.floor(n[1]))),
+                    (this.deathTokenType = "Score Token"));
                   if (t)
                     this.betaData = {
                       permissions: room.testingMode || 3 === t[1] ? t[1] : 0,
                       nameColor: t[2],
                       discordID: t[3],
                       name: t[4],
-                    };
+                    },
+                    this.deathTokenType ||
+                      (this.deathTokenType =
+                        3 === t[1] ? "Developer Token" : "Tester Token");
                   else {
                     let e = accountEncryption.decode(this.key);
                     e.startsWith("PASSWORD_") &&
@@ -11621,6 +11629,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   t.body.killCount.bosses,
                   t.body.killCount.killers.length,
                   ...t.body.killCount.killers,
+                  this.deathTokenType || "",
                 ];
               })()),
               (t.gui = this.makeGUI(t)),
