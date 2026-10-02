@@ -3813,6 +3813,7 @@
                                             global.finalKills[2].set(m[4]);
                                             global.finalKillers = [];
                                             for (let i = 0; i < m[5]; i++) global.finalKillers.push(m[6 + i]);
+                                            global.finalTokenType = m[6 + m[5]] || null;
                                             global.died = global.resetMenuColor = true;
                                             window.onbeforeunload = function () {
                                                 return 0;
@@ -6932,11 +6933,12 @@
                                 drawText("\u231A Survived for " + util.formatTime(Math.round(global.finalLifetime.get())) + ".", x - 170, y + 55, 16, color.guiwhite);
                                 drawText(getKills(), x - 170, y + 77, 16, color.guiwhite);
                                 drawText(getDeath(), x - 170, y + 99, 16, color.guiwhite);
-                                drawText(delay > 0 ? "Respawn in " + delay + " second" + (delay === 1 ? "" : "s") + "." : "Press enter to respawn!", x, y + 125, 16, color.guiwhite, "center");
+                                if (global.finalTokenType) drawText("A token was used in this run (" + global.finalTokenType + ").", x - 170, y + 121, 16, color.guiwhite);
+                                drawText(delay > 0 ? "Respawn in " + delay + " second" + (delay === 1 ? "" : "s") + "." : "Press enter to respawn!", x, y + (global.finalTokenType ? 147 : 125), 16, color.guiwhite, "center");
                                 const bw = 150,
                                     bh = 36,
                                     bx = x - bw / 2,
-                                    by = y + 150;
+                                    by = y + (global.finalTokenType ? 172 : 150);
                                 global.deathBackButton = { x: bx, y: by, w: bw, h: bh };
                                 ctx.save();
                                 ctx.globalAlpha = 0.75;
