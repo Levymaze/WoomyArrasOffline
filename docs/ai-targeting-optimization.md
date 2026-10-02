@@ -12,10 +12,17 @@ Base: upstream `da8bfdee49f286a991f367115459a66ce2b8bf74` (includes PRs #14 and 
 - Locks also check firing arcs every tick. The first damage collision resolves to the same owner/source as before, with eligibility checked before retaliation. Health is sampled each tick, allowing retaliation after healing; the stale `validTargets.indexOf(hit)` exclusion no longer blocks an eligible attacker.
 - Danger/farm selection preserves the existing order-dependent rule. Grid enumeration can change tie/order outcomes. Weapon tracking, the `this.isBot` discrepancy, lead formula/cadence, movement, and combat style are not redesigned.
 
+## Repair of the initially published patch
+
+Commit `effd662` restores the earlier implementation on `perf/ai-target-grid-lazy-acquisition`, replacing the separate reconstruction in `47dc3ea`. That reconstruction crashed during population because an inner `let e` shadowed the loop index before `entities[e]`. The restored code also reinstates moving-cell maintenance, safe query bounds, validated retaliation, periodic spatial reconsideration and gated metrics.
+
+The additional `test-ai-targeting-tick.js` runs the real tick orchestration and per-entity lifecycle with fixture entities: non-empty startup population, live targeting, death/destroy/purge/reacquisition, collision relocation, physics cell crossing, huge/infinite query bounds and helper script inclusion. It does not simulate rendering or the full Entity implementation. Browser smoke was attempted but the environment has no Chromium executable; in-game checks remain pending.
+
 ## Automated verification
 
 ```sh
 node tools/test-ai-targeting.js
+node tools/test-ai-targeting-tick.js
 node tools/bench-ai-targeting.js
 node tools/test-hshg-cross-level.js
 node tools/test-entity-id-map.js
@@ -29,21 +36,21 @@ The benchmark also compares old/new candidate sets across 128 settings combinati
 
 ## Synthetic results
 
-One run on Node 24, 360 measured ticks after warmup, with a fifth of entities moved each tick. Counts and time include all controller calls plus the new grid's refresh, per-entity update probes and rebuild. No collision physics, rendering, real weapons, or full game modes are simulated. These are **not in-game MSPT results**. Timing varies with runtime/JIT/load.
+Rechecked on 2026-10-02 using Node 24, 360 measured ticks after warmup, with a fifth of entities moved each tick. Counts and time include all controller calls plus the new grid's refresh, per-entity update probes and rebuild. No collision physics, rendering, real weapons, or full game modes are simulated. These are **not in-game MSPT results**. Timing varies with runtime/JIT/load.
 
 | Fixture | Bots | Active entities | Baseline synthetic ms/tick | New synthetic ms/tick | Baseline candidates/search | New candidates/search | Searches/tick, old → new |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Normal | 40 | 680 | 0.424 | 0.228 | 680 | 8.3 | 1.475 → 0.336 |
-| 10,000 projectiles | 40 | 10,480 | 5.626 | 0.686 | 10,480 | 8.3 | 1.475 → 0.336 |
-| 6,000 food | 60 | 6,320 | 5.227 | 2.385 | 6,320 | 91.1 | 2.219 → 0.506 |
-| Dense Growth-like | 80 | 10,160 | 12.068 | 1.290 | 10,160 | 996.2 | 2.953 → 0.683 |
+| Normal | 40 | 680 | 0.425 | 0.191 | 680 | 8.3 | 1.475 → 0.336 |
+| 10,000 projectiles | 40 | 10,480 | 5.348 | 0.456 | 10,480 | 8.3 | 1.475 → 0.336 |
+| 6,000 food | 60 | 6,320 | 4.959 | 1.569 | 6,320 | 91.1 | 2.219 → 0.506 |
+| Dense Growth-like | 80 | 10,160 | 11.214 | 0.966 | 10,160 | 996.2 | 2.953 → 0.683 |
 
 | Fixture | Baseline targeting ms/tick | New targeting ms/tick | Baseline buildList ms/tick | New buildList ms/tick | New grid maintenance ms/tick |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Normal | 0.412 | 0.076 | 0.363 | 0.006 | 0.142 |
-| Projectiles | 5.584 | 0.082 | 5.529 | 0.009 | 0.562 |
-| Food | 5.197 | 0.147 | 5.120 | 0.038 | 2.202 |
-| Dense Growth-like | 12.014 | 0.437 | 11.890 | 0.302 | 0.797 |
+| Normal | 0.413 | 0.064 | 0.363 | 0.004 | 0.118 |
+| Projectiles | 5.318 | 0.060 | 5.269 | 0.005 | 0.367 |
+| Food | 4.905 | 0.111 | 4.834 | 0.028 | 1.438 |
+| Dense Growth-like | 11.171 | 0.395 | 11.064 | 0.284 | 0.544 |
 
 Adding ordinary projectiles leaves local acquisition candidate counts unchanged. The population step still visits active entities, and tick bookkeeping still probes their grid membership; total server cost is not independent of projectile count.
 
@@ -93,4 +100,4 @@ Sampling can miss ticks when the browser is busy. Record the same scene/settings
 
 Run FFA, TDM, Growth, Growth Siege, Dominator/Mothership AI, and Ranked Battle if available. Check nearby enemy acquisition, friendly/passive/invulnerable/invisible exclusions, IGNORE_SHAPES, range/arc/room invalidation, target death, damage retaliation and continued aim/fire while the target moves. Repeat in ordinary fights, projectile floods, many polygons and dense Growth combat. Full game-mode smokes and actual MSPT/AI/controller measurements remain for the local build.
 
-The entire implementation is one commit on `perf/ai-target-grid`; revert that commit to remove it, including its script tag. No merge into either main is required for testing.
+The test branch is `perf/ai-target-grid-lazy-acquisition`, linked to upstream PR #16. Neither main is changed. To return to the pre-patch local build, check out the upstream base above. After merging, revert the complete PR (or its squash commit); reverting only the repair commit would restore the broken reconstruction.
