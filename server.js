@@ -2945,81 +2945,106 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       }),
       (ioTypes.nearestDifferentMaster = class extends IO {
         constructor(e) {
-          super(e),
-            (this.targetLock = void 0),
-            (this.tick = ran.irandom(30)),
-            (this.lead = 0),
-            (this.validTargets = this.buildList(e.fov)),
-            (this.oldHealth = e.health.display()),
-            (this.lastView = Date.now());
+          super(e);
+          this.targetLock = undefined;
+          this.tick = ran.irandom(30);
+          this.lead = 0;
+          this.validTargets = [];
+          this.needsTarget = true;
+          this.searchDelay = 0;
+          this.reconsiderIn = 90 + ran.irandom(30);
+          this.oldHealth = (e.bond || e).health.display();
+          this.lastView = Date.now();
         }
-        validate(e, t, s, i, a) {
+        validate(e, bodyX, bodyY, masterX, masterY, rangeSq, masterRangeSq) {
+          const body = this.body, master = body.master.master, enemyMaster = e.master.master;
           return (
-            (!c.RANKED_BATTLE || e.roomId === this.body.roomId) &&
-            e.health.amount > 0 &&
-            !isNaN(e.dangerValue) &&
-            !e.invuln &&
-            !e.master.master.passive &&
-            !this.body.master.master.passive &&
-            e.master.master.team !== this.body.master.master.team &&
-            -101 !== e.master.master.team &&
-            (this.body.aiSettings.seeInvisible ||
-              this.body.isArenaCloser ||
-              e.alpha > 0.5) &&
-            (this.body.settings.targetPlanes
-              ? e.isPlane && ("drone" === e.type || "minion" === e.type)
-              : "miniboss" === e.type ||
-                "tank" === e.type ||
-                "crasher" === e.type ||
-                (!this.body.aiSettings.IGNORE_SHAPES && "food" === e.type)) &&
-            (this.body.aiSettings.BLIND ||
-              ((e.x - t.x) * (e.x - t.x) < i &&
-                (e.y - t.y) * (e.y - t.y) < i)) &&
-            (this.body.aiSettings.SKYNET ||
-              ((e.x - s.x) * (e.x - s.x) < a && (e.y - s.y) * (e.y - s.y) < a))
+            e !== body && enemyMaster.team !== master.team &&
+            enemyMaster.team !== -101 && e.health.amount > 0 &&
+            !e.invuln && !enemyMaster.passive && !master.passive &&
+            (!c.RANKED_BATTLE || e.roomId === body.roomId) &&
+            (body.settings.targetPlanes
+              ? e.isPlane && (e.type === "drone" || e.type === "minion")
+              : e.type === "miniboss" || e.type === "tank" || e.type === "crasher" ||
+                (!body.aiSettings.IGNORE_SHAPES && e.type === "food")) &&
+            (body.aiSettings.seeInvisible || body.isArenaCloser || e.alpha > 0.5) &&
+            (body.aiSettings.BLIND ||
+              ((e.x - bodyX) * (e.x - bodyX) < rangeSq &&
+               (e.y - bodyY) * (e.y - bodyY) < rangeSq)) &&
+            (body.aiSettings.SKYNET ||
+              ((e.x - masterX) * (e.x - masterX) < masterRangeSq &&
+               (e.y - masterY) * (e.y - masterY) < masterRangeSq)) &&
+            !isNaN(e.dangerValue)
           );
         }
-        buildList(e) {
+        inArc(target, firingArc, view360) {
+          return firingArc == null || view360 || Math.abs(util.angleDifference(
+            Math.atan2(target.y - this.body.y, target.x - this.body.x), firingArc[0]
+          )) < firingArc[1];
+        }
+        usable(target, rangeSq, masterRangeSq) {
+          const body = this.body, master = body.master.master;
+          return this.validate(target, body.x, body.y, master.x, master.y, rangeSq, masterRangeSq) &&
+            this.inArc(target, body.firingArc, body.aiSettings.view360);
+        }
+        buildList(range) {
           newLogs.buildList.start();
-          let t = 0,
-            s = !1,
-            i = [];
-          for (let a = 0, o = targetableEntities.length; a < o; a++) {
-            let o = targetableEntities[a];
-            this.validate(
-              o,
-              {
-                x: this.body.x,
-                y: this.body.y,
-              },
-              {
-                x: this.body.master.master.x,
-                y: this.body.master.master.y,
-              },
-              e * e,
-              (e * e * 4) / 3
-            ) &&
-              (null == this.body.firingArc ||
-                this.body.aiSettings.view360 ||
-                Math.abs(
-                  util.angleDifference(
-                    util.getDirection(this.body, o),
-                    this.body.firingArc[0]
-                  )
-                ) < this.body.firingArc[1]) &&
-              ((t = Math.max(o.dangerValue, t)),
-              (this.body.aiSettings.farm || o.dangerValue === t) &&
-                (this.targetLock && o.id === this.targetLock.id && (s = !0),
-                i.push(o)));
+          const stats = aiTargetStats, started = stats ? performance.now() : 0;
+          const body = this.body, master = body.master.master;
+          const bodyX = body.x, bodyY = body.y, masterX = master.x, masterY = master.y;
+          const rangeSq = range * range, masterRangeSq = rangeSq * 4 / 3;
+          const firingArc = body.firingArc, view360 = body.aiSettings.view360;
+          const targets = this.validTargets;
+          targets.length = 0;
+          let danger = 0, retained = false;
+          if (stats) { stats.searches++; stats.globalCandidates += targetableEntities.length; }
+          const visit = target => {
+            if (stats) stats.candidatesVisited++;
+            if (!this.validate(target, bodyX, bodyY, masterX, masterY, rangeSq, masterRangeSq)) return;
+            if (stats) stats.candidatesValidated++;
+            if (!this.inArc(target, firingArc, view360)) return;
+            // Preserve the existing order-dependent danger/farm selection.
+            danger = Math.max(target.dangerValue, danger);
+            if (body.aiSettings.farm || target.dangerValue === danger) {
+              if (target === this.targetLock) retained = true;
+              targets.push(target);
+            }
+          };
+          const blind = body.aiSettings.BLIND, skynet = body.aiSettings.SKYNET;
+          const x = blind ? masterX : bodyX, y = blind ? masterY : bodyY;
+          const halfSize = blind ? Math.sqrt(masterRangeSq) : Math.abs(range);
+          if ((blind && skynet) ||
+              // Debug oracle: set __aiTargetGlobalScan as well as __aiTargetDebug.
+              (stats && globalThis.__aiTargetGlobalScan) ||
+              !aiTargetGrid.query(x - halfSize, y - halfSize, x + halfSize, y + halfSize, visit)) {
+            if (stats) stats.globalScans++;
+            for (let i = 0; i < targetableEntities.length; i++) visit(targetableEntities[i]);
           }
-          return s || (this.targetLock = void 0), newLogs.buildList.stop(), i;
+          if (!retained) this.targetLock = undefined;
+          if (stats) stats.buildListMs += performance.now() - started;
+          newLogs.buildList.stop();
+          return targets;
         }
         think(e) {
-          if (e.main || e.alt || this.body.master.autoOverride)
-            return (this.targetLock = void 0), {};
+          if (e.main || e.alt || this.body.master.autoOverride) {
+            this.targetLock = undefined;
+            this.needsTarget = true;
+            return {};
+          }
           newLogs.targeting.start();
-          let t = this.body.topSpeed,
-            s = this.body.fov;
+          const stats = aiTargetStats, started = stats ? performance.now() : 0;
+          try {
+            return this.target(stats);
+          } finally {
+            if (stats) {
+              stats.targetingMs += performance.now() - started;
+              if (this.targetLock) stats.lockedControllers++;
+            }
+            newLogs.targeting.stop();
+          }
+        }
+        target(stats) {
+          let t = this.body.topSpeed, s = this.body.fov;
           for (let e = 0; e < this.body.guns.length; e++)
             if (this.body.guns[e].canShoot) {
               let i = this.body.guns[e].getTracking();
@@ -3033,81 +3058,57 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     ));
               break;
             }
-          if (
-            (Number.isFinite(t) || (t = this.body.topSpeed + 0.01),
-            (!Number.isFinite(s) || s < this.body.size) && (s = this.body.fov),
-            this.targetLock &&
-              (this.validate(
-                this.targetLock,
-                {
-                  x: this.body.x,
-                  y: this.body.y,
-                },
-                {
-                  x: this.body.master.master.x,
-                  y: this.body.master.master.y,
-                },
-                s * s,
-                (s * s * 4) / 3
-              ) ||
-                ((this.targetLock = void 0), (this.tick = 100))),
-            this.tick++ > 25 * room.speed &&
-              ((this.tick = 0),
-              (this.validTargets = this.buildList(
-                this.body.isBot || this.body.isMothership ? 0.65 * s : s
-              )),
-              this.targetLock &&
-                -1 === this.validTargets.indexOf(this.targetLock) &&
-                (this.targetLock = void 0),
-              null == this.targetLock &&
-                this.validTargets.length &&
-                ((this.targetLock =
-                  1 === this.validTargets.length
-                    ? this.validTargets[0]
-                    : nearest(this.validTargets, {
-                        x: this.body.x,
-                        y: this.body.y,
-                      })),
-                (this.tick = -90))),
-            this.body.isBot)
-          ) {
-            let e = this.body.bond || this.body;
-            e.collisionArray.length &&
-              e.health.display() < this.oldHealth &&
-              ((this.oldHealth = e.health.display()),
-              -1 === this.validTargets.indexOf(e.collisionArray[0]) &&
-                (this.targetLock =
-                  -1 === e.collisionArray[0].master.id
-                    ? e.collisionArray[0].source
-                    : e.collisionArray[0].master));
+          if (!Number.isFinite(t)) t = this.body.topSpeed + 0.01;
+          if (!Number.isFinite(s) || s < this.body.size) s = this.body.fov;
+          const body = this.body;
+          const rangeSq = s * s, masterRangeSq = rangeSq * 4 / 3;
+          this.tick++;
+          if (this.targetLock && !this.usable(this.targetLock, rangeSq, masterRangeSq)) {
+            this.targetLock = undefined;
+            this.needsTarget = true;
+            if (stats) stats.invalidations++;
           }
-          if (null != this.targetLock) {
-            let e = this.targetLock.velocity,
-              s = {
-                x: this.targetLock.x - this.body.x,
-                y: this.targetLock.y - this.body.y,
-              };
-            if (
-              this.tick % 4 == 0 &&
-              ((this.lead = 0), !this.body.aiSettings.CHASE)
-            ) {
-              let i = timeOfImpact(s, e, t);
-              this.lead = i;
-            }
-            return (
-              Number.isFinite(this.lead) || (this.lead = 0),
-              newLogs.targeting.stop(),
-              {
-                target: {
-                  x: s.x + this.lead * e.x,
-                  y: s.y + this.lead * e.y,
-                },
-                fire: !0,
-                main: !0,
+          // Resolve the same first collision's owner/source as before. Health is
+          // sampled every tick so a hit after healing also triggers retaliation.
+          if (body.isBot) {
+            const owner = body.bond || body, health = owner.health.display();
+            if (health < this.oldHealth && owner.collisionArray.length) {
+              const hit = owner.collisionArray[0];
+              const attacker = hit.master.id === -1 ? hit.source : hit.master;
+              if (attacker && this.usable(attacker, rangeSq, masterRangeSq)) {
+                if (stats && attacker !== this.targetLock) stats.damageRetargets++;
+                this.targetLock = attacker;
+                this.needsTarget = false;
+                this.reconsiderIn = 90 + ran.irandom(30);
               }
-            );
+            }
+            this.oldHealth = health;
           }
-          return newLogs.targeting.stop(), {};
+          const reconsider = this.targetLock && --this.reconsiderIn <= 0;
+          if (reconsider || (!this.targetLock && (this.needsTarget || --this.searchDelay <= 0))) {
+            if (stats && reconsider) stats.fallbackReconsiderations++;
+            this.buildList(body.isBot || body.isMothership ? 0.65 * s : s);
+            if (!this.targetLock && this.validTargets.length) {
+              this.targetLock = this.validTargets.length === 1
+                ? this.validTargets[0] : nearest(this.validTargets, body);
+              this.tick = -90;
+            }
+            this.needsTarget = false;
+            this.searchDelay = 1 + ran.irandom(3);
+            this.reconsiderIn = 90 + ran.irandom(30);
+          }
+          if (this.targetLock != null) {
+            const velocity = this.targetLock.velocity;
+            const offset = { x: this.targetLock.x - body.x, y: this.targetLock.y - body.y };
+            if (this.tick % 4 === 0) {
+              this.lead = 0;
+              if (!body.aiSettings.CHASE) this.lead = timeOfImpact(offset, velocity, t);
+            }
+            if (!Number.isFinite(this.lead)) this.lead = 0;
+            return { target: { x: offset.x + this.lead * velocity.x,
+              y: offset.y + this.lead * velocity.y }, fire: true, main: true };
+          }
+          return {};
         }
       }),
       (ioTypes.roamWhenIdle = class extends IO {
@@ -4745,6 +4746,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       entitiesToAvoid = [],
       entities = [],
       targetableEntities = [],
+      aiTargetGrid = new AITargetGrid(),
+      aiTargetStats = null,
       bot = null,
       players = [],
       clients = [],
@@ -5107,6 +5110,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             };
           t.settings.attentionCraver && !s.main && t.range && (t.range -= 1),
             newLogs.controllers.start();
+          const controllerStarted = aiTargetStats ? performance.now() : 0;
           for (let e = 0, s = t.controllers.length; e < s; e++) {
             let s = t.controllers[e].think(i);
             s &&
@@ -5124,6 +5128,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   s.alt && !i.alt && (i.alt = s.alt),
                   s.power && !i.power && (i.power = s.power)));
           }
+          if (aiTargetStats) aiTargetStats.controllerMs += performance.now() - controllerStarted;
           (t.control.target = null == i.target ? t.control.target : i.target),
             (t.control.goal = i.goal),
             (t.control.fire = i.fire),
@@ -12935,6 +12940,16 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           };
         return () => {
           let s = performance.now();
+          aiTargetStats = globalThis.__aiTargetDebug ? (globalThis.__aiTargetStats ||
+            (globalThis.__aiTargetStats = {})) : null;
+          if (aiTargetStats) {
+            Object.assign(aiTargetStats, { tick: (aiTargetStats.tick || 0) + 1,
+              searches: 0, candidatesVisited: 0,
+              candidatesValidated: 0, globalCandidates: 0, globalScans: 0,
+              lockedControllers: 0, invalidations: 0, damageRetargets: 0,
+              fallbackReconsiderations: 0, buildListMs: 0, targetingMs: 0,
+              controllerMs: 0 });
+          }
           if (
             (newLogs.location.reset(),
             newLogs.death.reset(),
@@ -12960,23 +12975,38 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             for (let s of chunkar(t, 400)) for (let t of s) e(t);
           }
           newLogs.collision.stop(), logs.collide.mark(), logs.entities.set();
-          for (let e = 0, s = entities.length; e < s; e++) t(entities[e]);
-          (targetableEntities = []), purgeEntities();
+          aiTargetGrid.refresh();
+          for (let e = 0, s = entities.length; e < s; e++) {
+            t(entities[e]);
+            // Later controllers see centers moved by physics, portals or bounds.
+            aiTargetGrid.update(entities[e]);
+          }
+          targetableEntities.length = 0;
+          aiTargetGrid.clear();
+          purgeEntities();
           for (let e = 0, t = entities.length; e < t; e++)
             (i = entities[e]),
               newLogs.activation.start(),
               (i.collisionArray = []),
               i.activation.update(),
               i.updateAABB(i.activation.check()),
-              i.activation.check() && (i.passive || targetableEntities.push(i)),
+              i.activation.check() && !i.passive &&
+                (targetableEntities.push(i), aiTargetGrid.add(i)),
               newLogs.activation.stop();
           var i;
+          if (aiTargetStats) {
+            aiTargetStats.gridEntities = aiTargetGrid.members.length;
+            aiTargetStats.globalEntities = targetableEntities.length;
+            aiTargetStats.averageCandidates = aiTargetStats.searches
+              ? aiTargetStats.candidatesVisited / aiTargetStats.searches : 0;
+          }
           logs.entities.mark(),
             logs.master.mark(),
             purgeEntities(),
             (room.lastCycle = util.time()),
             (room.mspt = performance.now() - s),
             room.mspt > 10 && c.logMode && speedCheckLoop.printAnways();
+          if (aiTargetStats) aiTargetStats.mspt = room.mspt;
         };
       })(),
       abilityLoop = () => {
