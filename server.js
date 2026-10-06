@@ -1124,6 +1124,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             e &&
             e.isDominator &&
             e.isHealerDominator &&
+            e.team === -1 &&
             !e.isGhost &&
             e.health &&
             e.health.amount > 0
@@ -1133,6 +1134,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (e) =>
             e &&
             (e.isPlayer || e.isBot) &&
+            e.team === -1 &&
             "tank" === e.type &&
             !e.isGhost &&
             e.health &&
