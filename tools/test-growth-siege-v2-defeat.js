@@ -48,4 +48,14 @@ assert.equal(countsAsHealer({ ...alive, team: -2 }), false,
 assert.equal(countsAsHealer({ ...alive, team: -1 }), true,
   "recaptured defender healer should count again");
 
-console.log("Growth Siege V2 healer defeat counting preserves neutralization and recapture semantics");
+const reloadStart = source.indexOf("const getGunReloadReduction");
+const reloadEnd = source.indexOf("const isMegaTrapperLineClass", reloadStart);
+assert.ok(reloadStart >= 0 && reloadEnd > reloadStart, "gun reload helper not found");
+const reloadHelper = source.slice(reloadStart, reloadEnd);
+assert.match(
+  reloadHelper,
+  /getEntityRoot\(e\)[\s\S]*?i && i\.isDominator\) return 0/,
+  "dominators must bypass player-class reload reductions"
+);
+
+console.log("Growth Siege V2 healer defeat counting preserves neutralization, recapture, and reload semantics");
