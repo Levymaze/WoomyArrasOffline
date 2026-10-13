@@ -4158,11 +4158,18 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         ? overloadReloadReductionSeconds * reloadUnitsPerSecond
         : 0;
     };
-    const getGunReloadReduction = (e, t = "", s = null) =>
-      Math.max(
+    const getGunReloadReduction = (e, t = "", s = null) => {
+      // Dominators use their own fixed weapon balance. In Growth Siege V2 the
+      // Sanctuary is built from a destroyer dominator definition, so matching
+      // its root class key as a player destroyer would reduce the healer gun's
+      // reload from 20 units past zero and clamp it to 0.1.
+      let i = getEntityRoot(e);
+      if (i && i.isDominator) return 0;
+      return Math.max(
         getDestroyerLineReloadReduction(e, t, s),
         getBiggerCheeseReloadReduction(e, t, s)
       );
+    };
     const isMegaTrapperLineClass = (e) => {
       let t = (e || "").toLowerCase().trim();
       return /mega trapper|giga trapper|tera trapper|tatter|hammerer|plaguer|swarming mega|swarming hammerer|tri-mega trapper|mega arsenal|giga arsenal|logger|screwdriver|recorder|vicaria|crustacean|clogger|mega trap/.test(
