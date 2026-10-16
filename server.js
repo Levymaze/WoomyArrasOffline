@@ -1233,7 +1233,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
             : "#FFFFFF") /* BOT TAG ORIGINAL COLOR: #c1caff */,
           (a.autoOverride = !0),
           (a.invuln = !0),
-          (a.skill.score = 59212),
+          // Give every bot a meaningful but varied head start, regardless of mode.
+          (a.skill.score = 56000 + Math.floor(Math.random() * 2944001)),
           setTimeout(() => {
             (a.invuln = !1),
               (a.autoOverride = !1),
@@ -2070,7 +2071,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
       },
       getEntity = (e) => entities.find((t) => t.id === e),
       trimName = (e) =>
-        (e || "").replace("‮", "").trim() || "An unnamed player",
+        (e || "").replace(/\0/g, "").replace("‮", "").trim() || "An unnamed player",
       quickCombine = (e) => {
         if (null == e) return "Please input a valid array of gun settings.";
         if (13 === e.length)
@@ -4814,7 +4815,9 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         maxSkillPoints: 90,
         fovPerGrowth: 0.08,
         maxFovMultiplier: 1.15,
-        healthPerGrowth: 0.28,
+        // Match the full Growth health curve players receive. This applies to
+        // bots, bosses, and score-accepting polygons as well as tanks.
+        healthPerGrowth: 1,
         barrelPerGrowth: 1,
         barrelKnockbackDamage: 0.35,
         barrelKnockbackForce: 0.02,
@@ -7861,6 +7864,18 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
           (this.damageReceived = 0),
           this.isDead())
         ) {
+          if (globalThis.__traceCollisionDeaths && "tank" === this.type) {
+            console.warn("[death trace]", {
+              id: this.id,
+              name: this.name,
+              label: this.label,
+              time: Date.now(),
+              isGhost: this.isGhost,
+              isInGrid: this.isInGrid,
+              collisions: this.collisionArray.length,
+              hitters: this.collisionArray.map((entity) => entity.id),
+            });
+          }
           if (isProjectileDeathFadeEntity(this)) {
             this.forceProjectileDeathFade = !0;
             this.forceProjectileDeathAnchor =
@@ -7985,6 +8000,17 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 : this.isBot
                 ? (t += " was slaughtered by server code.")
                 : (t += " suffered an unknown fate.");
+            if (globalThis.__traceCollisionDeaths && t.includes("\0"))
+              console.warn("[death trace: invalid announcement]", {
+                victimId: this.id,
+                victimName: this.name,
+                killers: e.map((killer) => ({
+                  id: killer.id,
+                  name: killer.name,
+                  label: killer.label,
+                })),
+                announcement: t,
+              });
             sockets.broadcast(t);
           }
           return newLogs.death.stop(), !0;
@@ -8871,6 +8897,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                 nameColor: "#FFFFFF",
                 discordID: -1,
               }),
+              (this.deathTokenType = null),
               (this.player = {
                 camera: {},
                 id: this.id,
@@ -9330,14 +9357,18 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     ]);
                   let n = (Array.isArray(atlas.c) ? atlas.c : []).find((e) => e && e[0] === this.key);
                   n && Number.isFinite(n[1]) &&
-                    (this.initialValue = Math.max(0, Math.floor(n[1])));
+                    ((this.initialValue = Math.max(0, Math.floor(n[1]))),
+                    (this.deathTokenType = "Score Token"));
                   if (t)
                     this.betaData = {
                       permissions: room.testingMode || 3 === t[1] ? t[1] : 0,
                       nameColor: t[2],
                       discordID: t[3],
                       name: t[4],
-                    };
+                    },
+                    this.deathTokenType ||
+                      (this.deathTokenType =
+                        3 === t[1] ? "Developer Token" : "Tester Token");
                   else {
                     let e = accountEncryption.decode(this.key);
                     e.startsWith("PASSWORD_") &&
@@ -9485,7 +9516,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                     -1 !== views.indexOf(this.view) &&
                       (util.remove(views, views.indexOf(this.view)),
                       this.makeView()),
-                    (this.player = this.spawn(e, n)),
+                    (this.player = this.spawn(e.replace(/\0/g, ""), n)),
                     t &&
                       this.talk(
                         "R",
@@ -11598,6 +11629,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   t.body.killCount.bosses,
                   t.body.killCount.killers.length,
                   ...t.body.killCount.killers,
+                  this.deathTokenType || "",
                 ];
               })()),
               (t.gui = this.makeGUI(t)),
@@ -11824,7 +11856,7 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
         })();
         return {
           broadcast: (e, t = "") => {
-            for (let s of clients) s.talk("m", e, t);
+            for (let s of clients) s.talk("m", e.replace(/\0/g, ""), t);
           },
           broadcastRoom: () => {
             for (let e of clients)
@@ -12817,6 +12849,35 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
               }
             };
           })(),
+          deathWithTrace = (entity) => {
+            try {
+              return entity.death();
+            } catch (error) {
+              if (globalThis.__traceCollisionDeaths)
+                console.error("[death trace: death failed]", {
+                  id: entity.id,
+                  name: entity.name,
+                  label: entity.label,
+                  isGhost: entity.isGhost,
+                }, error);
+              throw error;
+            }
+          },
+          destroyWithTrace = (entity) => {
+            try {
+              entity.destroy();
+            } catch (error) {
+              if (globalThis.__traceCollisionDeaths)
+                console.error("[death trace: destroy failed]", {
+                  id: entity.id,
+                  name: entity.name,
+                  label: entity.label,
+                  isGhost: entity.isGhost,
+                  isInGrid: entity.isInGrid,
+                }, error);
+              throw error;
+            }
+          },
           t = (e) => {
             let t = room.wallCollisions.filter((t) => t.id === e.id);
             if (t.length > 1) {
@@ -12844,8 +12905,8 @@ for (let e of ["log", "warn", "info", "spawn", "error"]) {
                   ((e.invuln = e.passive = e.godmode = !1),
                   (e.killedByWalls = !0)));
             }
-            e.death()
-              ? e.destroy()
+            deathWithTrace(e)
+              ? destroyWithTrace(e)
               : (null == e.bond &&
                   (logs.physics.set(),
                   newLogs.physics.start(),

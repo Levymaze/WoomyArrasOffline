@@ -103507,25 +103507,25 @@ defExport.destroyerGunnerFlank = {
     GUNS: [{
         POSITION: [12, 3.5, 1, 0, 7.25, 180, .5],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.fast]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.half_reload, g.bit_more_reload]),
             TYPE: defExport.bullet
         }
     }, {
         POSITION: [12, 3.5, 1, 0, -7.25, 180, .75],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.fast]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.half_reload, g.bit_more_reload]),
             TYPE: defExport.bullet
         }
     }, {
         POSITION: [16, 3.5, 1, 0, 3.75, 180, 0],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.fast]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.half_reload, g.bit_more_reload]),
             TYPE: defExport.bullet
         }
     }, {
         POSITION: [16, 3.5, 1, 0, -3.75, 180, .25],
         PROPERTIES: {
-            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.fast]),
+            SHOOT_SETTINGS: combineStats([g.basic, g.twin, g.pure_gunner, g.half_reload, g.bit_more_reload]),
             TYPE: defExport.bullet
         }
     }, {
